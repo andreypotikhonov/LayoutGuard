@@ -2,13 +2,15 @@ import Carbon.HIToolbox
 import Foundation
 
 enum InputSourceController {
-    static func select(_ language: SupportedLanguage) {
+    static func select(_ language: SupportedLanguage) -> Bool {
+        if currentLanguage() == language { return true }
+
         let filter = [
             kTISPropertyInputSourceCategory as String: kTISCategoryKeyboardInputSource!,
             kTISPropertyInputSourceIsSelectCapable as String: true
         ] as CFDictionary
 
-        guard let unmanaged = TISCreateInputSourceList(filter, false) else { return }
+        guard let unmanaged = TISCreateInputSourceList(filter, false) else { return false }
         let sources = unmanaged.takeRetainedValue() as NSArray
 
         for case let source as TISInputSource in sources {
@@ -30,10 +32,23 @@ enum InputSourceController {
             }
 
             if matches {
-                TISSelectInputSource(source)
-                return
+                guard TISSelectInputSource(source) == noErr else { return false }
+                return currentLanguage() == language
             }
         }
+
+        return false
+    }
+
+    static func currentLanguage() -> SupportedLanguage? {
+        guard let source = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue(),
+              let identifier = stringProperty(kTISPropertyInputSourceID, source: source)?.lowercased() else {
+            return nil
+        }
+
+        if identifier.contains("keylayout.russian") { return .russian }
+        if identifier.contains("keylayout.abc") || identifier.contains("keylayout.us") { return .english }
+        return nil
     }
 
     private static func stringProperty(_ key: CFString, source: TISInputSource) -> String? {

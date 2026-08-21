@@ -110,11 +110,15 @@ final class KeyboardMonitor {
 
         let replacement = decision.replacement + text
         DispatchQueue.main.async {
+            let switchedLayout = decision.reason == .wrongLayout
+                ? InputSourceController.select(decision.language)
+                : nil
             TextInjector.replacePreviousText(utf16Length: word.utf16.count, with: replacement)
-            if decision.reason == .wrongLayout {
-                InputSourceController.select(decision.language)
-            }
-            model.recordCorrection(original: word, replacement: decision.replacement)
+            model.recordCorrection(
+                original: word,
+                replacement: decision.replacement,
+                switchedLayout: switchedLayout
+            )
         }
 
         return nil

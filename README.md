@@ -54,6 +54,7 @@
 
 ```sh
 ./scripts/test-core.sh
+./scripts/test-spelling.sh
 swift build
 ```
 

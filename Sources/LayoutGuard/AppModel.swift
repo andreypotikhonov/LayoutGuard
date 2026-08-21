@@ -50,6 +50,9 @@ final class AppModel: ObservableObject {
 
     func start() {
         refreshPermission()
+        if !hasAccessibilityPermission {
+            _ = AccessibilityPermission.request()
+        }
         updateMonitoring()
     }
 
@@ -68,10 +71,16 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
-    func recordCorrection(original: String, replacement: String) {
+    func recordCorrection(original: String, replacement: String, switchedLayout: Bool?) {
         correctionCount += 1
         UserDefaults.standard.set(correctionCount, forKey: Keys.correctionCount)
-        lastCorrection = "\(original) → \(replacement)"
+        let switchStatus: String
+        switch switchedLayout {
+        case true?: switchStatus = " · раскладка ✓"
+        case false?: switchStatus = " · раскладка не переключилась"
+        case nil: switchStatus = ""
+        }
+        lastCorrection = "\(original) → \(replacement)\(switchStatus)"
     }
 
     private func updateMonitoring() {

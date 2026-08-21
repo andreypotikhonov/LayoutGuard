@@ -16,7 +16,41 @@ final class CorrectionEngine {
     private let typoCorrector = TypoCorrector()
 
     func decision(for word: String, correctTypos: Bool) -> CorrectionDecision? {
-        if let layout = layoutDetector.correction(for: word) {
+        var originalIsCorrectlySpelled = false
+        if let currentLanguage = LayoutConverter.language(of: word) {
+            let targetLanguage: SupportedLanguage = currentLanguage == .english ? .russian : .english
+            originalIsCorrectlySpelled = typoCorrector.isCorrectlySpelled(
+                word,
+                language: currentLanguage
+            )
+
+            if !originalIsCorrectlySpelled,
+               let converted = LayoutConverter.convert(word, to: targetLanguage) {
+                if correctTypos,
+                   let correctedConverted = typoCorrector.correction(
+                    for: converted,
+                    language: targetLanguage
+                   ) {
+                    return CorrectionDecision(
+                        replacement: correctedConverted,
+                        language: targetLanguage,
+                        reason: .wrongLayout
+                    )
+                }
+
+                if typoCorrector.isCorrectlySpelled(converted, language: targetLanguage),
+                   !originalIsCorrectlySpelled {
+                    return CorrectionDecision(
+                        replacement: converted,
+                        language: targetLanguage,
+                        reason: .wrongLayout
+                    )
+                }
+            }
+        }
+
+        if !originalIsCorrectlySpelled,
+           let layout = layoutDetector.correction(for: word) {
             return CorrectionDecision(
                 replacement: layout.replacement,
                 language: layout.targetLanguage,
