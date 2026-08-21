@@ -1,0 +1,25 @@
+import Foundation
+
+@main
+enum CoreChecks {
+    static func main() {
+        check(LayoutConverter.convert("ghbdtn", to: .russian) == "привет", "ghbdtn → привет")
+        check(LayoutConverter.convert("руддщ", to: .english) == "hello", "руддщ → hello")
+        check(LayoutDetector().correction(for: "ghbdtn")?.replacement == "привет", "detect Russian")
+        check(LayoutDetector().correction(for: "руддщ")?.replacement == "hello", "detect English")
+        check(LayoutDetector().correction(for: "rfr")?.replacement == "как", "detect short Russian word")
+        check(LayoutDetector().correction(for: "ltkf")?.replacement == "дела", "detect second Russian word")
+        check(LayoutDetector().correction(for: "hello") == nil, "keep valid English")
+        check(LayoutDetector().correction(for: "привет") == nil, "keep valid Russian")
+        check(LayoutDetector().correction(for: "today") == nil, "keep another valid English word")
+        check(LayoutDetector().correction(for: "работа") == nil, "keep another valid Russian word")
+        check(EditDistance.damerauLevenshtein("привет", "првиет") == 1, "transposition")
+        print("Core checks passed")
+    }
+
+    private static func check(_ condition: @autoclosure () -> Bool, _ name: String) {
+        guard condition() else {
+            fatalError("Core check failed: \(name)")
+        }
+    }
+}

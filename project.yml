@@ -1,0 +1,40 @@
+name: LayoutGuard
+options:
+  bundleIdPrefix: com.andreipotikhonov
+  deploymentTarget:
+    macOS: "13.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+targets:
+  LayoutGuard:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/LayoutGuard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreipotikhonov.LayoutGuard
+        PRODUCT_NAME: LayoutGuard
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: LayoutGuard
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_APP_SANDBOX: NO
+    scheme:
+      testTargets:
+        - LayoutGuardTests
+  LayoutGuardTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/LayoutGuardTests
+    dependencies:
+      - target: LayoutGuard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreipotikhonov.LayoutGuardTests
+        GENERATE_INFOPLIST_FILE: YES
