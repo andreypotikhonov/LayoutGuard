@@ -14,6 +14,10 @@ Check(
     $"Win32 INPUT ABI size ({Marshal.SizeOf<NativeMethods.Input>()})");
 Check(settings.RestoreBrokenKeys, "broken-key restoration is enabled by default");
 Check(settings.BrokenRussianLetters.Contains('п'), "Russian п is marked as a broken key by default");
+Check(settings.BrokenRussianLetters.Contains('р'), "Russian р is marked as a broken key by default");
+Check(settings.BrokenRussianLetters.Contains('э'), "Russian э is marked as a broken key by default");
+Check(!settings.BrokenRussianLetters.Contains('и'), "Russian и is not marked as a broken key");
+Check(settings.BrokenEnglishLetters == "gh'", "physical English keys match Russian прэ");
 Check(!settings.CorrectTypos, "general spelling replacement is disabled by default");
 Check(!settings.CorrectMissingSpaces, "speculative missing-space correction is disabled by default");
 
@@ -25,6 +29,29 @@ Check(
         Reason: CorrectionReason.MissingBrokenKey
     },
     "engine classifies ривет → привет as broken-key restoration");
+
+Check(engine.Decide("кзамен", options)?.Replacement == "экзамен",
+    "trained model restores missing Russian э");
+Check(engine.Decide("лектрон", options)?.Replacement == "электрон",
+    "trained model restores missing Russian э in a longer word");
+Check(engine.Decide("кран", options) is null,
+    "trained model does not rewrite valid кран as экран");
+Check(engine.Decide("потести", options) is null,
+    "trained model preserves unknown потести");
+Check(engine.Decide("релизь", options) is null,
+    "trained model preserves unknown релизь");
+Check(engine.Decide("превет", options) is null,
+    "trained model does not turn an ordinary typo into a different word");
+
+var modelWatch = Stopwatch.StartNew();
+for (var index = 0; index < 2_000; index++)
+{
+    _ = engine.Decide(index % 2 == 0 ? "кзамен" : "ривет", options);
+}
+modelWatch.Stop();
+var averageModelMilliseconds = modelWatch.Elapsed.TotalMilliseconds / 2_000;
+Check(averageModelMilliseconds < 2,
+    $"trained word model stays below 2 ms/word average (actual: {averageModelMilliseconds:F4} ms)");
 
 var typoDecision = engine.Decide("превет", new CorrectionOptions { CorrectTypos = true });
 Check(typoDecision?.Replacement == "привет", "engine corrects an ordinary typo превет → привет");
