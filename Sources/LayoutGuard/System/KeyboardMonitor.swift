@@ -3,6 +3,12 @@ import CoreGraphics
 import Foundation
 
 final class KeyboardMonitor {
+    private enum AddressInputMode {
+        case undecided
+        case searchQuery
+        case webAddress
+    }
+
     private struct PrefixConversion {
         let original: String
         let replacement: String
@@ -18,6 +24,8 @@ final class KeyboardMonitor {
     private var currentApplicationIdentifier: String?
     private var applicationObserver: NSObjectProtocol?
     private var secureFieldFocused = false
+    private var browserAddressFieldFocused = false
+    private var addressInputMode = AddressInputMode.undecided
     private var secureFieldRefreshWorkItem: DispatchWorkItem?
     private let maximumSentenceLength = 512
 
@@ -34,7 +42,7 @@ final class KeyboardMonitor {
                 as? NSRunningApplication
             self.currentApplicationIdentifier = application?.bundleIdentifier
             self.resetInputContext()
-            self.scheduleSecureFieldRefresh()
+            self.scheduleFocusedFieldRefresh()
         }
     }
 
@@ -76,7 +84,7 @@ final class KeyboardMonitor {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        refreshSecureFieldStatus()
+        refreshFocusedFieldStatus()
         return true
     }
 
@@ -104,7 +112,7 @@ final class KeyboardMonitor {
 
         guard type == .keyDown else {
             resetInputContext()
-            scheduleSecureFieldRefresh()
+            scheduleFocusedFieldRefresh()
             return Unmanaged.passUnretained(event)
         }
 
@@ -118,14 +126,14 @@ final class KeyboardMonitor {
         let flags = event.flags
         if flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate) {
             resetInputContext()
-            scheduleSecureFieldRefresh()
+            scheduleFocusedFieldRefresh()
             return Unmanaged.passUnretained(event)
         }
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         if keyCode == 48 { // Tab can move focus into or out of a password field.
             resetInputContext()
-            scheduleSecureFieldRefresh()
+            scheduleFocusedFieldRefresh()
             return Unmanaged.passUnretained(event)
         }
 
@@ -152,6 +160,7 @@ final class KeyboardMonitor {
         if text.allSatisfy({ $0.isLetter || $0 == "-" || $0 == "'" }) ||
             canStartWrongLayoutWord(with: text) {
             if text.allSatisfy({ $0.isLetter }),
+               canCorrectLiveInFocusedField,
                LayoutConverter.needsWordBoundary(between: currentWord, and: text) {
                 let previousWord = currentWord
                 let decision = correctionEngine.decision(
@@ -186,6 +195,7 @@ final class KeyboardMonitor {
             if currentWord.count > 64 { currentWord = "" }
 
             if currentWord.count >= 5,
+               canCorrectLiveInFocusedField,
                let decision = correctionEngine.layoutDecision(for: currentWord) {
                 let original = currentWord
                 let prefixConversion = safelyConvertedSentencePrefix(to: decision.language)
@@ -216,12 +226,19 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
+        updateAddressInputMode(for: text)
+
         guard !currentWord.isEmpty else {
             appendToSentence(text)
             return Unmanaged.passUnretained(event)
         }
         let word = currentWord
         currentWord = ""
+
+        if browserAddressFieldFocused, addressInputMode != .searchQuery {
+            appendToSentence(word + text)
+            return Unmanaged.passUnretained(event)
+        }
 
         guard let decision = correctionEngine.decision(
             for: word,
@@ -342,20 +359,38 @@ final class KeyboardMonitor {
     private func resetInputContext() {
         currentWord = ""
         sentencePrefix = ""
+        addressInputMode = .undecided
     }
 
-    private func scheduleSecureFieldRefresh() {
+    private var canCorrectLiveInFocusedField: Bool {
+        !browserAddressFieldFocused || addressInputMode == .searchQuery
+    }
+
+    private func updateAddressInputMode(for text: String) {
+        guard browserAddressFieldFocused, addressInputMode == .undecided else { return }
+        if text.contains(where: { $0.isWhitespace }) {
+            addressInputMode = .searchQuery
+        } else if text.contains(where: { ".:/@\\".contains($0) }) {
+            addressInputMode = .webAddress
+        }
+    }
+
+    private func scheduleFocusedFieldRefresh() {
         secureFieldRefreshWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
-            self?.refreshSecureFieldStatus()
+            self?.refreshFocusedFieldStatus()
         }
         secureFieldRefreshWorkItem = workItem
         // Focus is updated just after the mouse/shortcut event reaches the app.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.04, execute: workItem)
     }
 
-    private func refreshSecureFieldStatus() {
+    private func refreshFocusedFieldStatus() {
         secureFieldFocused = SecureFieldDetector.isSecureFieldFocused()
+        browserAddressFieldFocused = SecureFieldDetector.isBrowserAddressFieldFocused(
+            applicationIdentifier: currentApplicationIdentifier
+        )
+        addressInputMode = .undecided
     }
 
     private func unicodeString(from event: CGEvent) -> String? {
