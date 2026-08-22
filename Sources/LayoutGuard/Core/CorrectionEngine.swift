@@ -16,7 +16,8 @@ final class CorrectionEngine {
     private let typoCorrector = TypoCorrector()
 
     func layoutDecision(for word: String) -> CorrectionDecision? {
-        guard let decision = decision(for: word, correctTypos: true),
+        guard word.count >= 5,
+              let decision = decision(for: word, correctTypos: false),
               decision.reason == .wrongLayout else {
             return nil
         }

@@ -14,7 +14,11 @@ enum SpellingChecks {
         let russianLayout = engine.decision(for: "ghbdtn", correctTypos: true)
         check(russianLayout?.replacement == "привет", "detect Russian layout")
         check(russianLayout?.reason == .wrongLayout, "mark Russian layout switch")
+        check(engine.layoutDecision(for: "ghbdt") == nil, "wait for a complete layout word")
         check(engine.layoutDecision(for: "ghbdtn")?.replacement == "привет", "live layout decision")
+        check(engine.layoutDecision(for: "руддщ")?.replacement == "hello", "live reverse layout decision")
+        check(engine.layoutDecision(for: "hel") == nil, "do not live-switch an English prefix")
+        check(engine.layoutDecision(for: "hell") == nil, "keep a valid English prefix")
         check(engine.layoutDecision(for: "hello") == nil, "do not live-switch valid English")
 
         let combined = engine.decision(for: "hfccrkflre", correctTypos: true)

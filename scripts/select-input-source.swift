@@ -27,7 +27,8 @@ guard let list = TISCreateInputSourceList(filter, false)?.takeRetainedValue() as
     fatalError("Unable to list input sources")
 }
 
-guard let source = list.compactMap({ $0 as? TISInputSource }).first(where: {
+let sources = list as! [TISInputSource]
+guard let source = sources.first(where: {
     stringProperty(kTISPropertyInputSourceID, source: $0) == wantedIdentifier
 }) else {
     fatalError("Input source not installed: \(wantedIdentifier)")

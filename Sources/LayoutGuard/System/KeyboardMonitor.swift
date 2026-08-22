@@ -8,6 +8,7 @@ final class KeyboardMonitor {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var currentWord = ""
+    private var currentApplicationIdentifier: String?
 
     init(model: AppModel) {
         self.model = model
@@ -16,7 +17,12 @@ final class KeyboardMonitor {
     func start() -> Bool {
         guard eventTap == nil else { return true }
 
-        let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
+        let mask = CGEventMask(
+            (1 << CGEventType.keyDown.rawValue) |
+            (1 << CGEventType.leftMouseDown.rawValue) |
+            (1 << CGEventType.rightMouseDown.rawValue) |
+            (1 << CGEventType.otherMouseDown.rawValue)
+        )
         let pointer = Unmanaged.passUnretained(self).toOpaque()
 
         guard let tap = CGEvent.tapCreate(
@@ -64,6 +70,11 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
+        guard type == .keyDown else {
+            currentWord = ""
+            return Unmanaged.passUnretained(event)
+        }
+
         model?.recordObservedKey()
 
         guard let model, model.isEnabled, model.hasAccessibilityPermission else {
@@ -71,7 +82,14 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
-        if isExcludedApplication(model: model) || SecureFieldDetector.isSecureFieldFocused() {
+        let applicationIdentifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        if applicationIdentifier != currentApplicationIdentifier {
+            currentWord = ""
+            currentApplicationIdentifier = applicationIdentifier
+        }
+
+        if isExcludedApplication(identifier: applicationIdentifier, model: model) ||
+            SecureFieldDetector.isSecureFieldFocused() {
             currentWord = ""
             return Unmanaged.passUnretained(event)
         }
@@ -97,24 +115,22 @@ final class KeyboardMonitor {
             currentWord.append(contentsOf: text)
             if currentWord.count > 64 { currentWord = "" }
 
-            if currentWord.count >= 3,
+            if currentWord.count >= 5,
                let decision = correctionEngine.layoutDecision(for: currentWord) {
                 let original = currentWord
                 let previouslyDeliveredLength = max(0, original.utf16.count - text.utf16.count)
                 currentWord = decision.replacement
 
-                DispatchQueue.main.async {
-                    let switchedLayout = InputSourceController.select(decision.language)
-                    TextInjector.replacePreviousText(
-                        utf16Length: previouslyDeliveredLength,
-                        with: decision.replacement
-                    )
-                    model.recordCorrection(
-                        original: original,
-                        replacement: decision.replacement,
-                        switchedLayout: switchedLayout
-                    )
-                }
+                TextInjector.replacePreviousText(
+                    utf16Length: previouslyDeliveredLength,
+                    with: decision.replacement
+                )
+                let switchedLayout = InputSourceController.select(decision.language)
+                model.recordCorrection(
+                    original: original,
+                    replacement: decision.replacement,
+                    switchedLayout: switchedLayout
+                )
 
                 return nil
             }
@@ -134,17 +150,15 @@ final class KeyboardMonitor {
         }
 
         let replacement = decision.replacement + text
-        DispatchQueue.main.async {
-            let switchedLayout = decision.reason == .wrongLayout
-                ? InputSourceController.select(decision.language)
-                : nil
-            TextInjector.replacePreviousText(utf16Length: word.utf16.count, with: replacement)
-            model.recordCorrection(
-                original: word,
-                replacement: decision.replacement,
-                switchedLayout: switchedLayout
-            )
-        }
+        TextInjector.replacePreviousText(utf16Length: word.utf16.count, with: replacement)
+        let switchedLayout = decision.reason == .wrongLayout
+            ? InputSourceController.select(decision.language)
+            : nil
+        model.recordCorrection(
+            original: word,
+            replacement: decision.replacement,
+            switchedLayout: switchedLayout
+        )
 
         return nil
     }
@@ -161,8 +175,8 @@ final class KeyboardMonitor {
         return String(utf16CodeUnits: buffer, count: length)
     }
 
-    private func isExcludedApplication(model: AppModel) -> Bool {
-        guard let identifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else { return false }
+    private func isExcludedApplication(identifier: String?, model: AppModel) -> Bool {
+        guard let identifier else { return false }
         return model.excludedBundleIdentifiers.contains(identifier)
     }
 }
