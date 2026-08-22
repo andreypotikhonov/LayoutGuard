@@ -27,6 +27,9 @@ jobs:
       - name: Test correction engine
         run: dotnet run --project Windows/tests/LayoutGuard.Core.Checks/LayoutGuard.Core.Checks.csproj -c Release
 
+      - name: Test Windows text replacement and layout switching
+        run: dotnet run --project Windows/tests/LayoutGuard.Windows.Checks/LayoutGuard.Windows.Checks.csproj -c Release
+
       - name: Publish Windows x64
         run: >-
           dotnet publish Windows/src/LayoutGuard.Windows/LayoutGuard.Windows.csproj
