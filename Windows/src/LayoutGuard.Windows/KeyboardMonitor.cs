@@ -9,8 +9,12 @@ internal sealed class KeyboardMonitor : IDisposable
     private readonly Action<CorrectionDecision, bool?> _onCorrection;
     private readonly SecureFieldDetector _secureFields = new();
     private readonly LowLevelInputHook _hook;
+    private readonly System.Threading.Timer _securityTimer;
     private string _currentWord = string.Empty;
     private string _sentencePrefix = string.Empty;
+    private int _securityRefreshActive;
+    private volatile CorrectionOptions _correctionOptions;
+    private volatile bool _shouldPause = true;
 
     public KeyboardMonitor(
         CorrectionEngine engine,
@@ -21,6 +25,9 @@ internal sealed class KeyboardMonitor : IDisposable
         _settings = settings;
         _onCorrection = onCorrection;
         _hook = new LowLevelInputHook(HandleKey, ResetContext);
+        _correctionOptions = settings().ToCorrectionOptions();
+        _securityTimer = new System.Threading.Timer(
+            _ => RefreshSecurityState(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
     }
 
     public void Start() => _hook.Start();
@@ -34,7 +41,7 @@ internal sealed class KeyboardMonitor : IDisposable
             return false;
         }
         var settings = _settings();
-        if (!settings.Enabled || _secureFields.ShouldPause(settings))
+        if (!settings.Enabled || _shouldPause)
         {
             ResetContext();
             return false;
@@ -70,17 +77,19 @@ internal sealed class KeyboardMonitor : IDisposable
 
             _currentWord += text;
             if (_currentWord.Length > 64) _currentWord = string.Empty;
-            if (_currentWord.Length >= 5)
+            if (_currentWord.Length >= 4)
             {
-                var live = _engine.LayoutDecision(_currentWord, settings.ToCorrectionOptions());
+                var liveOptions = _correctionOptions;
+                var live = _engine.EarlyLayoutDecision(_currentWord, liveOptions);
                 if (live is not null)
                 {
                     var livePhrase = _engine.PlanTrailingLayoutCorrection(
                         _sentencePrefix,
                         live.Language,
-                        settings.ToCorrectionOptions());
+                        liveOptions);
                     var deliveredLength = Math.Max(0, _currentWord.Length - text.Length);
                     var prefixLength = livePhrase?.Original.Length ?? 0;
+                    var switched = InputLanguageSwitcher.Select(live.Language);
                     TextInjector.ReplacePreviousText(
                         prefixLength + deliveredLength,
                         (livePhrase?.Replacement ?? string.Empty) + live.Replacement);
@@ -89,7 +98,6 @@ internal sealed class KeyboardMonitor : IDisposable
                         _sentencePrefix = _sentencePrefix[..livePhrase.Start] + livePhrase.Replacement;
                     }
                     _currentWord = live.Replacement;
-                    var switched = InputLanguageSwitcher.Select(live.Language);
                     _onCorrection(live, switched);
                     return true;
                 }
@@ -105,7 +113,7 @@ internal sealed class KeyboardMonitor : IDisposable
 
         var word = _currentWord;
         _currentWord = string.Empty;
-        var options = settings.ToCorrectionOptions();
+        var options = _correctionOptions;
         var decision = _engine.Decide(word, options);
         if (decision is null)
         {
@@ -116,6 +124,9 @@ internal sealed class KeyboardMonitor : IDisposable
         var boundaryPhrase = decision.Reason == CorrectionReason.WrongLayout
             ? _engine.PlanTrailingLayoutCorrection(_sentencePrefix, decision.Language, options)
             : null;
+        bool? switchedLayout = decision.Reason == CorrectionReason.WrongLayout
+            ? InputLanguageSwitcher.Select(decision.Language)
+            : null;
         TextInjector.ReplacePreviousText(
             word.Length + (boundaryPhrase?.Original.Length ?? 0),
             (boundaryPhrase?.Replacement ?? string.Empty) + decision.Replacement + text);
@@ -123,9 +134,6 @@ internal sealed class KeyboardMonitor : IDisposable
         {
             _sentencePrefix = _sentencePrefix[..boundaryPhrase.Start] + boundaryPhrase.Replacement;
         }
-        bool? switchedLayout = decision.Reason == CorrectionReason.WrongLayout
-            ? InputLanguageSwitcher.Select(decision.Language)
-            : null;
         _onCorrection(decision, switchedLayout);
         AppendToSentence(decision.Replacement + text);
         return true;
@@ -151,5 +159,28 @@ internal sealed class KeyboardMonitor : IDisposable
     private static bool ModifierDown(int virtualKey) =>
         (NativeMethods.GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 
-    public void Dispose() => _hook.Dispose();
+    private void RefreshSecurityState()
+    {
+        if (Interlocked.Exchange(ref _securityRefreshActive, 1) != 0) return;
+        try
+        {
+            var settings = _settings();
+            _correctionOptions = settings.ToCorrectionOptions();
+            _shouldPause = _secureFields.ShouldPause(settings);
+        }
+        catch
+        {
+            _shouldPause = true;
+        }
+        finally
+        {
+            Volatile.Write(ref _securityRefreshActive, 0);
+        }
+    }
+
+    public void Dispose()
+    {
+        _securityTimer.Dispose();
+        _hook.Dispose();
+    }
 }

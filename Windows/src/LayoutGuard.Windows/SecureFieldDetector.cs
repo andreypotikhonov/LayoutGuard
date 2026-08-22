@@ -7,8 +7,6 @@ internal sealed class SecureFieldDetector
 {
     private const int IsPasswordPropertyId = 30019;
     private readonly UIA.IUIAutomation _automation = new UIA.CUIAutomation8Class();
-    private long _lastCheck;
-    private bool _lastResult;
 
     public bool ShouldPause(AppSettings settings)
     {
@@ -25,18 +23,14 @@ internal sealed class SecureFieldDetector
         }
         catch { }
 
-        var now = Environment.TickCount64;
-        if (now - _lastCheck < 350) return _lastResult;
-        _lastCheck = now;
         try
         {
             var focused = _automation.GetFocusedElement();
-            _lastResult = focused?.GetCurrentPropertyValue(IsPasswordPropertyId) is true;
+            return focused?.GetCurrentPropertyValue(IsPasswordPropertyId) is true;
         }
         catch
         {
-            _lastResult = false;
+            return false;
         }
-        return _lastResult;
     }
 }
