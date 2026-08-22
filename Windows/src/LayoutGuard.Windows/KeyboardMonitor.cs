@@ -8,6 +8,7 @@ internal sealed class KeyboardMonitor : IDisposable
     private readonly Func<AppSettings> _settings;
     private readonly Action<CorrectionDecision, bool?> _onCorrection;
     private readonly SecureFieldDetector _secureFields = new();
+    private readonly Func<AppSettings, bool> _securityEvaluator;
     private readonly LowLevelInputHook _hook;
     private readonly System.Threading.Timer _securityTimer;
     private string _currentWord = string.Empty;
@@ -19,20 +20,24 @@ internal sealed class KeyboardMonitor : IDisposable
     public KeyboardMonitor(
         CorrectionEngine engine,
         Func<AppSettings> settings,
-        Action<CorrectionDecision, bool?> onCorrection)
+        Action<CorrectionDecision, bool?> onCorrection,
+        Func<AppSettings, bool>? securityEvaluator = null)
     {
         _engine = engine;
         _settings = settings;
         _onCorrection = onCorrection;
+        _securityEvaluator = securityEvaluator ?? _secureFields.ShouldPause;
         _hook = new LowLevelInputHook(HandleKey, ResetContext);
-        _correctionOptions = settings().ToCorrectionOptions();
+        var initialSettings = settings();
+        _correctionOptions = initialSettings.ToCorrectionOptions();
+        if (securityEvaluator is not null) _shouldPause = securityEvaluator(initialSettings);
         _securityTimer = new System.Threading.Timer(
             _ => RefreshSecurityState(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
     }
 
     public void Start() => _hook.Start();
 
-    private bool HandleKey(KeyStroke stroke)
+    internal bool HandleKey(KeyStroke stroke)
     {
         if (stroke.Injected) return false;
         if (ModifierDown(0x11) || ModifierDown(0x12) || ModifierDown(0x5B) || ModifierDown(0x5C))
@@ -69,7 +74,11 @@ internal sealed class KeyboardMonitor : IDisposable
             if (text.All(char.IsLetter) &&
                 KeyboardLayoutConverter.NeedsWordBoundary(_currentWord, text))
             {
-                TextInjector.ReplacePreviousText(0, " " + text);
+                if (!TextInjector.ReplacePreviousText(0, " " + text))
+                {
+                    ResetContext();
+                    return false;
+                }
                 _sentencePrefix += _currentWord + " ";
                 _currentWord = text;
                 return true;
@@ -89,10 +98,26 @@ internal sealed class KeyboardMonitor : IDisposable
                         liveOptions);
                     var deliveredLength = Math.Max(0, _currentWord.Length - text.Length);
                     var prefixLength = livePhrase?.Original.Length ?? 0;
-                    var switched = InputLanguageSwitcher.Select(live.Language);
-                    TextInjector.ReplacePreviousText(
+                    var injected = TextInjector.ReplacePreviousText(
                         prefixLength + deliveredLength,
                         (livePhrase?.Replacement ?? string.Empty) + live.Replacement);
+                    if (!injected)
+                    {
+                        ResetContext();
+                        return false;
+                    }
+                    var switched = InputLanguageSwitcher.Select(live.Language);
+                    if (!switched)
+                    {
+                        // Never leave a half-corrected word behind. The current
+                        // physical key is going to be swallowed, so restore the
+                        // complete source prefix (including that key) as Unicode.
+                        TextInjector.ReplacePreviousText(
+                            (livePhrase?.Replacement.Length ?? 0) + live.Replacement.Length,
+                            (livePhrase?.Original ?? string.Empty) + _currentWord);
+                        ResetContext();
+                        return true;
+                    }
                     if (livePhrase is not null)
                     {
                         _sentencePrefix = _sentencePrefix[..livePhrase.Start] + livePhrase.Replacement;
@@ -124,12 +149,17 @@ internal sealed class KeyboardMonitor : IDisposable
         var boundaryPhrase = decision.Reason == CorrectionReason.WrongLayout
             ? _engine.PlanTrailingLayoutCorrection(_sentencePrefix, decision.Language, options)
             : null;
+        var injectedAtBoundary = TextInjector.ReplacePreviousText(
+            word.Length + (boundaryPhrase?.Original.Length ?? 0),
+            (boundaryPhrase?.Replacement ?? string.Empty) + decision.Replacement + text);
+        if (!injectedAtBoundary)
+        {
+            AppendToSentence(word);
+            return false;
+        }
         bool? switchedLayout = decision.Reason == CorrectionReason.WrongLayout
             ? InputLanguageSwitcher.Select(decision.Language)
             : null;
-        TextInjector.ReplacePreviousText(
-            word.Length + (boundaryPhrase?.Original.Length ?? 0),
-            (boundaryPhrase?.Replacement ?? string.Empty) + decision.Replacement + text);
         if (boundaryPhrase is not null)
         {
             _sentencePrefix = _sentencePrefix[..boundaryPhrase.Start] + boundaryPhrase.Replacement;
@@ -166,7 +196,7 @@ internal sealed class KeyboardMonitor : IDisposable
         {
             var settings = _settings();
             _correctionOptions = settings.ToCorrectionOptions();
-            _shouldPause = _secureFields.ShouldPause(settings);
+            _shouldPause = _securityEvaluator(settings);
         }
         catch
         {

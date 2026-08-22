@@ -9,8 +9,21 @@ internal static class InputLanguageSwitcher
         var layoutId = language == SupportedLanguage.Russian ? "00000419" : "00000409";
         var layout = NativeMethods.LoadKeyboardLayout(layoutId, NativeMethods.KlfActivate);
         var foreground = NativeMethods.GetForegroundWindow();
-        return layout != IntPtr.Zero && foreground != IntPtr.Zero &&
-            NativeMethods.PostMessage(foreground, NativeMethods.WmInputLangChangeRequest, IntPtr.Zero, layout);
+        if (layout == IntPtr.Zero || foreground == IntPtr.Zero) return false;
+
+        var thread = NativeMethods.GetWindowThreadProcessId(foreground, out _);
+        var delivered = NativeMethods.SendMessageTimeout(
+            foreground,
+            NativeMethods.WmInputLangChangeRequest,
+            IntPtr.Zero,
+            layout,
+            NativeMethods.SmtoBlock | NativeMethods.SmtoAbortIfHung,
+            100,
+            out _);
+        if (delivered == IntPtr.Zero) return false;
+
+        var selected = NativeMethods.GetKeyboardLayout(thread);
+        var expectedLanguageId = language == SupportedLanguage.Russian ? 0x0419 : 0x0409;
+        return ((long)selected & 0xffff) == expectedLanguageId;
     }
 }
-

@@ -18,6 +18,8 @@ internal static class NativeMethods
     public const uint InputKeyboard = 1;
     public const uint KlfActivate = 0x00000001;
     public const uint LlkhfInjected = 0x00000010;
+    public const uint SmtoBlock = 0x0001;
+    public const uint SmtoAbortIfHung = 0x0002;
     public static readonly UIntPtr InjectionSignature = (UIntPtr)0x4C475741;
 
     public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -71,6 +73,16 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr SendMessageTimeout(
+        IntPtr window,
+        uint message,
+        IntPtr wParam,
+        IntPtr lParam,
+        uint flags,
+        uint timeout,
+        out UIntPtr result);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct KeyboardHookData
     {
@@ -91,7 +103,24 @@ internal static class NativeMethods
     [StructLayout(LayoutKind.Explicit)]
     public struct InputUnion
     {
+        // INPUT contains a union whose size is determined by MOUSEINPUT, even
+        // when SendInput is used only for keyboard events. Without this field
+        // Marshal.SizeOf<Input>() is 32 instead of the required 40 bytes on
+        // x64, and user32 rejects every injected correction.
+        [FieldOffset(0)] public MouseInput Mouse;
         [FieldOffset(0)] public KeyboardInput Keyboard;
+        [FieldOffset(0)] public HardwareInput Hardware;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MouseInput
+    {
+        public int X;
+        public int Y;
+        public uint MouseData;
+        public uint Flags;
+        public uint Time;
+        public UIntPtr ExtraInfo;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -102,5 +131,13 @@ internal static class NativeMethods
         public uint Flags;
         public uint Time;
         public UIntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HardwareInput
+    {
+        public uint Message;
+        public ushort ParameterLow;
+        public ushort ParameterHigh;
     }
 }

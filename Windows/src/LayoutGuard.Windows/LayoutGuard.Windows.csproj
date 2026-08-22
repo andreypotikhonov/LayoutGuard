@@ -10,11 +10,14 @@
     <AssemblyName>LayoutGuard</AssemblyName>
     <RootNamespace>LayoutGuard.Windows</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../LayoutGuard.Core/LayoutGuard.Core.csproj" />
     <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="LayoutGuard.Windows.Checks" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources/**/*">
