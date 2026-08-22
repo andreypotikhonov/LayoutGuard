@@ -34,14 +34,14 @@ struct SettingsView: View {
             }
 
             Section("Статистика") {
-                LabeledContent("Исправлено слов", value: "\(model.correctionCount)")
+                LabeledContent("Исправлений", value: "\(model.correctionCount)")
                 if let lastCorrection = model.lastCorrection {
                     LabeledContent("Последнее", value: lastCorrection)
                 }
             }
 
             Section {
-                Text("Текст обрабатывается локально. LayoutGuard хранит только текущее слово и не использует сеть.")
+                Text("Текст обрабатывается локально. LayoutGuard временно хранит только текущую незавершённую фразу и не использует сеть.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

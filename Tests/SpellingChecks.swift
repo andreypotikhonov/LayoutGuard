@@ -10,6 +10,18 @@ enum SpellingChecks {
             engine.decision(for: "расскладку", correctTypos: true)?.replacement == "раскладку",
             "fix double с"
         )
+        check(
+            engine.decision(for: "првиет", correctTypos: true)?.replacement == "привет",
+            "fix transposed letters"
+        )
+        check(
+            engine.decision(for: "раскалдку", correctTypos: true)?.replacement == "раскладку",
+            "fix a transposition in a longer word"
+        )
+        check(
+            engine.decision(for: "раскалдкку", correctTypos: true)?.replacement == "раскладку",
+            "fix two errors in a longer word"
+        )
 
         let russianLayout = engine.decision(for: "ghbdtn", correctTypos: true)
         check(russianLayout?.replacement == "привет", "detect Russian layout")

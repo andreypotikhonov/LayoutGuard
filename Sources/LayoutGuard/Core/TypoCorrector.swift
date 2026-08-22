@@ -39,7 +39,7 @@ final class TypoCorrector {
             return matchingCase(of: word, replacement: explicit)
         }
 
-        guard word.count >= 5,
+        guard word.count >= 4,
               word.rangeOfCharacter(from: .letters.inverted) == nil else {
             return nil
         }
@@ -55,20 +55,37 @@ final class TypoCorrector {
         )
 
         guard misspelledRange.location != NSNotFound,
-              misspelledRange == fullRange,
-              let guesses = NSSpellChecker.shared.guesses(
-                forWordRange: fullRange,
-                in: normalized,
-                language: language.spellCheckerCode,
-                inSpellDocumentWithTag: 0
-              ) else {
+              misspelledRange == fullRange else {
             return nil
         }
 
-        guard let guess = guesses.first(where: {
-            $0.lowercased() != normalized &&
-            EditDistance.damerauLevenshtein(normalized, $0.lowercased()) == 1
-        }) else { return nil }
+        let systemGuesses = NSSpellChecker.shared.guesses(
+            forWordRange: fullRange,
+            in: normalized,
+            language: language.spellCheckerCode,
+            inSpellDocumentWithTag: 0
+        ) ?? []
+        let guesses = systemGuesses + acceptedWords.sorted()
+        let maximumDistance = normalized.count >= 8 ? 2 : 1
+
+        let ranked = guesses.enumerated().compactMap { index, candidate -> (String, Int, Int)? in
+            let normalizedCandidate = candidate.lowercased()
+            guard normalizedCandidate != normalized,
+                  LayoutConverter.language(of: normalizedCandidate) == language,
+                  normalizedCandidate.rangeOfCharacter(from: .letters.inverted) == nil else {
+                return nil
+            }
+
+            let distance = EditDistance.damerauLevenshtein(normalized, normalizedCandidate)
+            guard distance <= maximumDistance else { return nil }
+            return (candidate, distance, index)
+        }
+        .sorted { lhs, rhs in
+            if lhs.1 != rhs.1 { return lhs.1 < rhs.1 }
+            return lhs.2 < rhs.2
+        }
+
+        guard let guess = ranked.first?.0 else { return nil }
 
         return matchingCase(of: word, replacement: guess)
     }

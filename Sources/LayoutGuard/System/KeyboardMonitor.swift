@@ -8,7 +8,9 @@ final class KeyboardMonitor {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var currentWord = ""
+    private var sentencePrefix = ""
     private var currentApplicationIdentifier: String?
+    private let maximumSentenceLength = 512
 
     init(model: AppModel) {
         self.model = model
@@ -57,7 +59,7 @@ final class KeyboardMonitor {
         }
         eventTap = nil
         runLoopSource = nil
-        currentWord = ""
+        resetInputContext()
     }
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
@@ -71,43 +73,47 @@ final class KeyboardMonitor {
         }
 
         guard type == .keyDown else {
-            currentWord = ""
+            resetInputContext()
             return Unmanaged.passUnretained(event)
         }
 
         model?.recordObservedKey()
 
         guard let model, model.isEnabled, model.hasAccessibilityPermission else {
-            currentWord = ""
+            resetInputContext()
             return Unmanaged.passUnretained(event)
         }
 
         let applicationIdentifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         if applicationIdentifier != currentApplicationIdentifier {
-            currentWord = ""
+            resetInputContext()
             currentApplicationIdentifier = applicationIdentifier
         }
 
         if isExcludedApplication(identifier: applicationIdentifier, model: model) ||
             SecureFieldDetector.isSecureFieldFocused() {
-            currentWord = ""
+            resetInputContext()
             return Unmanaged.passUnretained(event)
         }
 
         let flags = event.flags
         if flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate) {
-            currentWord = ""
+            resetInputContext()
             return Unmanaged.passUnretained(event)
         }
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         if keyCode == 51 {
-            if !currentWord.isEmpty { currentWord.removeLast() }
+            if !currentWord.isEmpty {
+                currentWord.removeLast()
+            } else if !sentencePrefix.isEmpty {
+                sentencePrefix.removeLast()
+            }
             return Unmanaged.passUnretained(event)
         }
 
         guard let text = unicodeString(from: event), !text.isEmpty else {
-            currentWord = ""
+            resetInputContext()
             return Unmanaged.passUnretained(event)
         }
 
@@ -118,17 +124,22 @@ final class KeyboardMonitor {
             if currentWord.count >= 5,
                let decision = correctionEngine.layoutDecision(for: currentWord) {
                 let original = currentWord
-                let previouslyDeliveredLength = max(0, original.utf16.count - text.utf16.count)
+                let originalPhrase = sentencePrefix + original
+                let convertedPrefix = convertedSentencePrefix(to: decision.language)
+                let replacementPhrase = convertedPrefix + decision.replacement
+                let previouslyDeliveredLength = sentencePrefix.utf16.count +
+                    max(0, original.utf16.count - text.utf16.count)
+                sentencePrefix = convertedPrefix
                 currentWord = decision.replacement
 
                 TextInjector.replacePreviousText(
                     utf16Length: previouslyDeliveredLength,
-                    with: decision.replacement
+                    with: replacementPhrase
                 )
                 let switchedLayout = InputSourceController.select(decision.language)
                 model.recordCorrection(
-                    original: original,
-                    replacement: decision.replacement,
+                    original: originalPhrase,
+                    replacement: replacementPhrase,
                     switchedLayout: switchedLayout
                 )
 
@@ -138,7 +149,10 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
-        guard !currentWord.isEmpty else { return Unmanaged.passUnretained(event) }
+        guard !currentWord.isEmpty else {
+            appendToSentence(text)
+            return Unmanaged.passUnretained(event)
+        }
         let word = currentWord
         currentWord = ""
 
@@ -146,21 +160,71 @@ final class KeyboardMonitor {
             for: word,
             correctTypos: model.correctTypos
         ) else {
+            appendToSentence(word + text)
             return Unmanaged.passUnretained(event)
         }
 
-        let replacement = decision.replacement + text
-        TextInjector.replacePreviousText(utf16Length: word.utf16.count, with: replacement)
+        let original: String
+        let correctedText: String
+        let replacedLength: Int
+        if decision.reason == .wrongLayout {
+            let convertedPrefix = convertedSentencePrefix(to: decision.language)
+            original = sentencePrefix + word
+            correctedText = convertedPrefix + decision.replacement
+            replacedLength = sentencePrefix.utf16.count + word.utf16.count
+        } else {
+            original = word
+            correctedText = decision.replacement
+            replacedLength = word.utf16.count
+        }
+
+        TextInjector.replacePreviousText(
+            utf16Length: replacedLength,
+            with: correctedText + text
+        )
         let switchedLayout = decision.reason == .wrongLayout
             ? InputSourceController.select(decision.language)
             : nil
         model.recordCorrection(
-            original: word,
-            replacement: decision.replacement,
+            original: original,
+            replacement: correctedText,
             switchedLayout: switchedLayout
         )
+        appendToSentence(correctedText + text, replacingCurrentPrefix: decision.reason == .wrongLayout)
 
         return nil
+    }
+
+    private func convertedSentencePrefix(to language: SupportedLanguage) -> String {
+        LayoutConverter.convert(sentencePrefix, to: language) ?? sentencePrefix
+    }
+
+    private func appendToSentence(_ text: String, replacingCurrentPrefix: Bool = false) {
+        if isSentenceBoundary(text) {
+            sentencePrefix = ""
+            return
+        }
+
+        if replacingCurrentPrefix {
+            sentencePrefix = text
+        } else {
+            sentencePrefix.append(contentsOf: text)
+        }
+
+        if sentencePrefix.count > maximumSentenceLength {
+            sentencePrefix = ""
+        }
+    }
+
+    private func isSentenceBoundary(_ text: String) -> Bool {
+        text.contains(where: { character in
+            character == "." || character == "!" || character == "?" || character.isNewline
+        })
+    }
+
+    private func resetInputContext() {
+        currentWord = ""
+        sentencePrefix = ""
     }
 
     private func unicodeString(from event: CGEvent) -> String? {

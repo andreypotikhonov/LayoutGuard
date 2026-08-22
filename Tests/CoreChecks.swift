@@ -5,6 +5,10 @@ enum CoreChecks {
     static func main() {
         check(LayoutConverter.convert("ghbdtn", to: .russian) == "привет", "ghbdtn → привет")
         check(LayoutConverter.convert("руддщ", to: .english) == "hello", "руддщ → hello")
+        check(
+            LayoutConverter.convert("lf z levf", to: .russian) == "да я дума",
+            "convert the whole sentence prefix"
+        )
         check(LayoutDetector().correction(for: "ghbdtn")?.replacement == "привет", "detect Russian")
         check(LayoutDetector().correction(for: "руддщ")?.replacement == "hello", "detect English")
         check(LayoutDetector().correction(for: "rfr")?.replacement == "как", "detect short Russian word")
