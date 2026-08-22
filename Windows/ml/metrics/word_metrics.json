@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "beam_size": 16,
+  "top_labels_per_gap": 2,
+  "frequency_weight": 0.1,
+  "correction_score_threshold": -6.0,
+  "validation": {
+    "rows": 127657,
+    "positives": 69097,
+    "negatives": 58560,
+    "positive_exact_accuracy": 0.8311359393316642,
+    "negative_preservation_accuracy": 1.0,
+    "false_positive_rate": 0.0,
+    "overall_accuracy": 0.9085988234096054,
+    "log_frequency_weighted_accuracy": 0.9152421543024767
+  },
+  "test": {
+    "rows": 127515,
+    "positives": 68934,
+    "negatives": 58581,
+    "positive_exact_accuracy": 0.8273856152261584,
+    "negative_preservation_accuracy": 1.0,
+    "false_positive_rate": 0.0,
+    "overall_accuracy": 0.906685487981806,
+    "log_frequency_weighted_accuracy": 0.9141389592638257
+  }
+}

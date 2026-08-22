@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "letters": "прэ",
+  "maximum_missing": 3,
+  "split": {
+    "train": 80,
+    "validation": 10,
+    "test": 10
+  },
+  "split_key": "sha256(expected) modulo 100",
+  "dictionary_words": 582956,
+  "frequency_words": 50000,
+  "counts": {
+    "test_negative": 58581,
+    "test_positive": 68934,
+    "test_rows": 127515,
+    "train_negative": 465815,
+    "train_positive": 552484,
+    "train_rows": 1018299,
+    "validation_negative": 58560,
+    "validation_positive": 69097,
+    "validation_rows": 127657
+  },
+  "positive_words_by_letter": {
+    "test_п": 27381,
+    "test_р": 51760,
+    "test_э": 4563,
+    "train_п": 220143,
+    "train_р": 413959,
+    "train_э": 40324,
+    "validation_п": 27470,
+    "validation_р": 51824,
+    "validation_э": 5059
+  },
+  "log_frequency_weight_by_split": {
+    "test": 199553,
+    "train": 1584129,
+    "validation": 199066
+  },
+  "dataset": "broken_keys_ru.tsv.gz",
+  "dataset_sha256": "578b7e6edeef19c6025fa4f904d1f850b7276f0d8150dac4a4eefcfc70819782",
+  "vocabulary_bloom": "broken_key_vocabulary.bloom",
+  "vocabulary_bloom_bits": 16777216,
+  "vocabulary_bloom_hashes": 16,
+  "vocabulary_bloom_sha256": "3916b6988babb8bb1dec3228f9848bb7d5dbc3dedb946288b963288d8d0ae303",
+  "sources": [
+    {
+      "path": "src/LayoutGuard.Windows/Resources/Dictionaries/ru_RU.dic",
+      "encoding": "KOI8-R",
+      "license": "MPL-2.0"
+    },
+    {
+      "path": "src/LayoutGuard.Windows/Resources/Frequencies/ru_50k.txt",
+      "encoding": "UTF-8",
+      "license": "CC BY-SA 4.0"
+    }
+  ]
+}

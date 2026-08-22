@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "device": "cuda",
+  "parameters": 9240,
+  "train_examples": 1018299,
+  "validation_examples": 127657,
+  "test_examples": 127515,
+  "train_gap_samples": 3296012,
+  "validation_gap_samples": 412727,
+  "test_gap_samples": 411797,
+  "loss": [
+    0.5065465996647959,
+    0.37065811577350255,
+    0.3520911331043678,
+    0.3431709634501714
+  ],
+  "validation_gap_accuracy": 0.8773620334991411,
+  "test_gap_accuracy": 0.8771749187099469,
+  "model_bytes": 190647
+}
