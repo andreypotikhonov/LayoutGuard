@@ -1,0 +1,4 @@
+src/LayoutGuard.Windows/Resources/Dictionaries/** linguist-vendored
+src/LayoutGuard.Windows/Resources/Frequencies/** linguist-vendored
+src/LayoutGuard.Windows/Resources/Licenses/** linguist-vendored
+*.dic -diff

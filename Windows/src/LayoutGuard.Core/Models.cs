@@ -1,0 +1,38 @@
+namespace LayoutGuard.Core;
+
+public enum SupportedLanguage
+{
+    English,
+    Russian
+}
+
+public enum CorrectionReason
+{
+    WrongLayout,
+    Typo,
+    MissingBrokenKey,
+    MissingSpace
+}
+
+public sealed record CorrectionDecision(
+    string Original,
+    string Replacement,
+    SupportedLanguage Language,
+    CorrectionReason Reason,
+    double Confidence = 1);
+
+public sealed record PhraseCorrection(
+    int Start,
+    string Original,
+    string Replacement);
+
+public sealed class CorrectionOptions
+{
+    public bool CorrectTypos { get; init; } = true;
+    public bool CorrectMissingSpaces { get; init; } = true;
+    public bool RestoreBrokenKeys { get; init; } = true;
+    public int MaximumMissingLetters { get; init; } = 3;
+    public ISet<char> BrokenRussianLetters { get; init; } = new HashSet<char>("при");
+    public ISet<char> BrokenEnglishLetters { get; init; } = new HashSet<char>("ghb");
+    public ISet<string> CustomWords { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+}
