@@ -17,13 +17,16 @@
 		4D96E5182E4781C0F6F22D72 /* KeyboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 083552F510F0DCBBF2A9C88F /* KeyboardMonitor.swift */; };
 		553B0813570B53B3BC4A2E99 /* SupportedLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F565A5F6FFDA3BD9FD80D46B /* SupportedLanguage.swift */; };
 		665D21D938EB735C42397141 /* AccessibilityPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD846B378D267A5068E92215 /* AccessibilityPermission.swift */; };
+		6F6834776CCF634952A7E720 /* RussianHunspell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1FE02CA694CBD51439CD76 /* RussianHunspell.swift */; };
 		75C00619EB94B027F88C9984 /* TypoCorrector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61200078E0AEFD40ED90C946 /* TypoCorrector.swift */; };
 		A3CBDEFF31A3005D1E53FCEA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6884FF51511998A68A0DBFC /* SettingsView.swift */; };
+		A45E5F81C3000C9D22277D35 /* Licenses in Resources */ = {isa = PBXBuildFile; fileRef = 27B76D4F6640293B7C733B33 /* Licenses */; };
 		D80ADDC43286C71FCB6348C2 /* TextInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B398EC1E7B26C51BD98E8 /* TextInjector.swift */; };
 		DA021E403CE13C40242E9595 /* LayoutConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F57C846E11FD7E5452395C /* LayoutConverterTests.swift */; };
 		E1B042C0254BD594054D071E /* LayoutGuardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B38974E2071161B9371927 /* LayoutGuardApp.swift */; };
 		E6F078CCAE5647A7E8E41309 /* InputSourceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E25C31D07FA664A6B2DA2CE /* InputSourceController.swift */; };
 		EE6758E49653EB102DA2F8E2 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3760336D96CDCC20F0DE30D /* AppModel.swift */; };
+		F4D185D68BD6DFD656B17947 /* Dictionaries in Resources */ = {isa = PBXBuildFile; fileRef = B0D7E84C634E946EE2D01CF0 /* Dictionaries */; };
 		F9F49E7822C832299613D0B2 /* LayoutConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB29433400A504EC14EE10D /* LayoutConverter.swift */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +45,7 @@
 		1E25C31D07FA664A6B2DA2CE /* InputSourceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceController.swift; sourceTree = "<group>"; };
 		24849A3CB6A0BA43DEA72724 /* LayoutDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutDetector.swift; sourceTree = "<group>"; };
 		279DEB6217571C8E44485092 /* LayoutDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutDetectorTests.swift; sourceTree = "<group>"; };
+		27B76D4F6640293B7C733B33 /* Licenses */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Licenses; path = Resources/Licenses; sourceTree = SOURCE_ROOT; };
 		2E1B2B6506B9BC23AE29FF76 /* EditDistance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditDistance.swift; sourceTree = "<group>"; };
 		3C2D993A02A8C0F658811B8F /* EditDistanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditDistanceTests.swift; sourceTree = "<group>"; };
 		457B398EC1E7B26C51BD98E8 /* TextInjector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInjector.swift; sourceTree = "<group>"; };
@@ -49,9 +53,11 @@
 		61200078E0AEFD40ED90C946 /* TypoCorrector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypoCorrector.swift; sourceTree = "<group>"; };
 		A6884FF51511998A68A0DBFC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AAB29433400A504EC14EE10D /* LayoutConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutConverter.swift; sourceTree = "<group>"; };
+		B0D7E84C634E946EE2D01CF0 /* Dictionaries */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Dictionaries; path = Resources/Dictionaries; sourceTree = SOURCE_ROOT; };
 		B8B38974E2071161B9371927 /* LayoutGuardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutGuardApp.swift; sourceTree = "<group>"; };
 		BFD578763BF3808466E1C772 /* LanguageScorer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageScorer.swift; sourceTree = "<group>"; };
 		C3760336D96CDCC20F0DE30D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		CC1FE02CA694CBD51439CD76 /* RussianHunspell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RussianHunspell.swift; sourceTree = "<group>"; };
 		CFF322F5B02FC02A791E2EAF /* LayoutGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LayoutGuard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD846B378D267A5068E92215 /* AccessibilityPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermission.swift; sourceTree = "<group>"; };
 		EA54FABA7063A71A549C5E67 /* LayoutGuardTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LayoutGuardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,6 +82,8 @@
 		30D9A7AC5E5B2E3B5331BF52 = {
 			isa = PBXGroup;
 			children = (
+				B0D7E84C634E946EE2D01CF0 /* Dictionaries */,
+				27B76D4F6640293B7C733B33 /* Licenses */,
 				341D7E021588C38FC7E70942 /* LayoutGuard */,
 				7593E530085761C85D0AC2DD /* LayoutGuardTests */,
 				3130940C85C281DB249B11DA /* Products */,
@@ -112,6 +120,7 @@
 				BFD578763BF3808466E1C772 /* LanguageScorer.swift */,
 				AAB29433400A504EC14EE10D /* LayoutConverter.swift */,
 				24849A3CB6A0BA43DEA72724 /* LayoutDetector.swift */,
+				CC1FE02CA694CBD51439CD76 /* RussianHunspell.swift */,
 				F565A5F6FFDA3BD9FD80D46B /* SupportedLanguage.swift */,
 				61200078E0AEFD40ED90C946 /* TypoCorrector.swift */,
 			);
@@ -145,6 +154,7 @@
 			buildConfigurationList = 3AC9E3C7A96CC0CE93B60053 /* Build configuration list for PBXNativeTarget "LayoutGuard" */;
 			buildPhases = (
 				9760B2039B56ACAE88F3C281 /* Sources */,
+				C04EA2C74AFAD60D3ED05908 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -209,6 +219,18 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		C04EA2C74AFAD60D3ED05908 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4D185D68BD6DFD656B17947 /* Dictionaries in Resources */,
+				A45E5F81C3000C9D22277D35 /* Licenses in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		7B5B25BE81E30828C6F8FD18 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -234,6 +256,7 @@
 				F9F49E7822C832299613D0B2 /* LayoutConverter.swift in Sources */,
 				2955590AFCED0A3310E84314 /* LayoutDetector.swift in Sources */,
 				E1B042C0254BD594054D071E /* LayoutGuardApp.swift in Sources */,
+				6F6834776CCF634952A7E720 /* RussianHunspell.swift in Sources */,
 				190733BB9A84E3E8E8F644A4 /* SecureFieldDetector.swift in Sources */,
 				A3CBDEFF31A3005D1E53FCEA /* SettingsView.swift in Sources */,
 				553B0813570B53B3BC4A2E99 /* SupportedLanguage.swift in Sources */,
@@ -276,6 +299,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -286,9 +310,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/Vendor/Hunspell/lib";
+				MARKETING_VERSION = 0.4.0;
+				OTHER_LDFLAGS = "-lhunspell-1.7 -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.andreipotikhonov.LayoutGuard;
 				PRODUCT_NAME = LayoutGuard;
 				SDKROOT = macosx;
+				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/Sources/CHunspell";
 			};
 			name = Debug;
 		};
@@ -361,6 +389,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -371,9 +400,13 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/Vendor/Hunspell/lib";
+				MARKETING_VERSION = 0.4.0;
+				OTHER_LDFLAGS = "-lhunspell-1.7 -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.andreipotikhonov.LayoutGuard;
 				PRODUCT_NAME = LayoutGuard;
 				SDKROOT = macosx;
+				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/Sources/CHunspell";
 			};
 			name = Release;
 		};

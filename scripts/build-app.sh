@@ -17,6 +17,7 @@ mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources" "$ICONSET"
 
 cp "$RELEASE_BINARY" "$CONTENTS/MacOS/$APP_NAME"
 cp App/Info.plist "$CONTENTS/Info.plist"
+ditto Resources "$CONTENTS/Resources"
 printf 'APPL????' > "$CONTENTS/PkgInfo"
 
 swift scripts/generate-icon.swift "$DIST_DIR/AppIcon-1024.png"

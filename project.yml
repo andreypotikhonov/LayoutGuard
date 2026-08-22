@@ -13,6 +13,12 @@ targets:
     platform: macOS
     sources:
       - Sources/LayoutGuard
+      - path: Resources/Dictionaries
+        type: folder
+        buildPhase: resources
+      - path: Resources/Licenses
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.andreipotikhonov.LayoutGuard
@@ -24,6 +30,11 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
         ENABLE_APP_SANDBOX: NO
+        SWIFT_INCLUDE_PATHS: "$(PROJECT_DIR)/Sources/CHunspell"
+        LIBRARY_SEARCH_PATHS: "$(PROJECT_DIR)/Vendor/Hunspell/lib"
+        OTHER_LDFLAGS: "-lhunspell-1.7 -lc++"
+        MARKETING_VERSION: "0.4.0"
+        CURRENT_PROJECT_VERSION: "6"
     scheme:
       testTargets:
         - LayoutGuardTests

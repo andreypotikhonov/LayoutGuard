@@ -2,6 +2,8 @@ import AppKit
 import Foundation
 
 final class TypoCorrector {
+    private lazy var russianHunspell = RussianHunspell.shared
+
     private let acceptedWords: Set<String> = [
         "че", "чето", "че-то",
         "раскладка", "раскладки", "раскладке", "раскладку", "раскладкой"
@@ -19,6 +21,11 @@ final class TypoCorrector {
         let normalized = word.lowercased()
         guard LayoutConverter.language(of: normalized) == language else { return false }
         if acceptedWords.contains(normalized) { return true }
+
+        if language == .russian,
+           let hunspellResult = russianHunspell.isCorrectlySpelled(normalized) {
+            return hunspellResult
+        }
 
         let misspelledRange = NSSpellChecker.shared.checkSpelling(
             of: normalized,
@@ -45,27 +52,36 @@ final class TypoCorrector {
         }
 
         let fullRange = NSRange(location: 0, length: (normalized as NSString).length)
-        let misspelledRange = NSSpellChecker.shared.checkSpelling(
-            of: normalized,
-            startingAt: 0,
-            language: language.spellCheckerCode,
-            wrap: false,
-            inSpellDocumentWithTag: 0,
-            wordCount: nil
-        )
+        let guesses: [String]
 
-        guard misspelledRange.location != NSNotFound,
-              misspelledRange == fullRange else {
-            return nil
+        if language == .russian,
+           let isCorrect = russianHunspell.isCorrectlySpelled(normalized),
+           let hunspellGuesses = russianHunspell.suggestions(for: normalized) {
+            guard !isCorrect else { return nil }
+            guesses = hunspellGuesses + acceptedWords.sorted()
+        } else {
+            let misspelledRange = NSSpellChecker.shared.checkSpelling(
+                of: normalized,
+                startingAt: 0,
+                language: language.spellCheckerCode,
+                wrap: false,
+                inSpellDocumentWithTag: 0,
+                wordCount: nil
+            )
+
+            guard misspelledRange.location != NSNotFound,
+                  misspelledRange == fullRange else {
+                return nil
+            }
+
+            let systemGuesses = NSSpellChecker.shared.guesses(
+                forWordRange: fullRange,
+                in: normalized,
+                language: language.spellCheckerCode,
+                inSpellDocumentWithTag: 0
+            ) ?? []
+            guesses = systemGuesses + acceptedWords.sorted()
         }
-
-        let systemGuesses = NSSpellChecker.shared.guesses(
-            forWordRange: fullRange,
-            in: normalized,
-            language: language.spellCheckerCode,
-            inSpellDocumentWithTag: 0
-        ) ?? []
-        let guesses = systemGuesses + acceptedWords.sorted()
         let maximumDistance = normalized.count >= 8 ? 2 : 1
 
         let ranked = guesses.enumerated().compactMap { index, candidate -> (String, Int, Int)? in

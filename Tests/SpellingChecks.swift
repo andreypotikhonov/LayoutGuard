@@ -7,6 +7,14 @@ enum SpellingChecks {
 
         check(engine.decision(for: "чето", correctTypos: true) == nil, "keep colloquial чето")
         check(
+            engine.decision(for: "неограненный", correctTypos: true) == nil,
+            "keep the valid word неограненный"
+        )
+        check(
+            engine.decision(for: "неограниченный", correctTypos: true) == nil,
+            "keep the distinct valid word неограниченный"
+        )
+        check(
             engine.decision(for: "расскладку", correctTypos: true)?.replacement == "раскладку",
             "fix double с"
         )

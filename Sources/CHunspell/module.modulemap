@@ -1,0 +1,5 @@
+module CHunspell [system] {
+    header "shim.h"
+    link "hunspell-1.7"
+    export *
+}
