@@ -14,6 +14,8 @@ Check(
     $"Win32 INPUT ABI size ({Marshal.SizeOf<NativeMethods.Input>()})");
 Check(settings.RestoreBrokenKeys, "broken-key restoration is enabled by default");
 Check(settings.BrokenRussianLetters.Contains('п'), "Russian п is marked as a broken key by default");
+Check(!settings.CorrectTypos, "general spelling replacement is disabled by default");
+Check(!settings.CorrectMissingSpaces, "speculative missing-space correction is disabled by default");
 
 var missingLetterDecision = engine.Decide("ривет", options);
 Check(
@@ -24,7 +26,7 @@ Check(
     },
     "engine classifies ривет → привет as broken-key restoration");
 
-var typoDecision = engine.Decide("превет", options);
+var typoDecision = engine.Decide("превет", new CorrectionOptions { CorrectTypos = true });
 Check(typoDecision?.Replacement == "привет", "engine corrects an ordinary typo превет → привет");
 
 using (var form = new Form
@@ -42,6 +44,9 @@ using (var input = new TextBox { Dock = DockStyle.Fill, Multiline = true })
     form.Activate();
     input.Focus();
     Application.DoEvents();
+
+    Check(NativeMethods.GetFocusedInputWindow() == input.Handle,
+        "focused child input window is used instead of only the top-level window");
 
     var sent = TextInjector.ReplacePreviousText(0, "привет");
     var deadline = DateTime.UtcNow.AddSeconds(2);
@@ -117,9 +122,41 @@ using (var input = new TextBox { Dock = DockStyle.Fill, Multiline = true })
         $"KeyboardMonitor replaced and switched the early рудд prefix (actual: '{input.Text}')");
 
     ResetMonitor(monitor, input);
-    FeedMonitor(monitor, input, "сейчасскаким ");
+    FeedMonitor(monitor, input, "потести ");
+    Check(input.Text == "потести ",
+        $"KeyboardMonitor did not split потести into syllables (actual: '{input.Text}')");
+
+    ResetMonitor(monitor, input);
+    InputLanguageSwitcher.Select(SupportedLanguage.Russian);
+    FeedMonitor(monitor, input, "релизь ");
+    Check(input.Text == "релизь ",
+        $"KeyboardMonitor preserved релизь without switching or rewriting (actual: '{input.Text}')");
+
+    ResetMonitor(monitor, input);
+    FeedMonitor(monitor, input, "сетифика ");
+    Check(!input.Text.TrimEnd().Contains(' '),
+        $"KeyboardMonitor did not insert spaces inside сетифика (actual: '{input.Text}')");
+
+    var certificateSettings = new AppSettings
+    {
+        CorrectTypos = false,
+        CorrectMissingSpaces = false,
+        BrokenRussianLetters = "рт",
+        MaximumMissingLetters = 3
+    };
+    using var certificateMonitor = new KeyboardMonitor(
+        engine, () => certificateSettings, (_, _) => { }, _ => false);
+    input.Clear();
+    FeedMonitor(certificateMonitor, input, "сетифика ");
+    Check(input.Text == "сертификат ",
+        $"KeyboardMonitor restored configured broken р and т keys (actual: '{input.Text}')");
+
+    var spaceSettings = new AppSettings { CorrectMissingSpaces = true };
+    using var spaceMonitor = new KeyboardMonitor(engine, () => spaceSettings, (_, _) => { }, _ => false);
+    input.Clear();
+    FeedMonitor(spaceMonitor, input, "сейчасскаким ");
     Check(input.Text == "сейчас с каким ",
-        $"KeyboardMonitor restored missing spaces (actual: '{input.Text}')");
+        $"KeyboardMonitor restored a high-confidence missing-space phrase when enabled (actual: '{input.Text}')");
 
     ResetMonitor(monitor, input);
     InputLanguageSwitcher.Select(SupportedLanguage.English);
