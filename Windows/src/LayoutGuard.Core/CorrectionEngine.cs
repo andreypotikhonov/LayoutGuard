@@ -12,6 +12,7 @@ public sealed class CorrectionEngine
     private readonly WordList _english;
     private readonly FrequencyTable _russianFrequency;
     private readonly FrequencyTable _englishFrequency;
+    private readonly BrokenKeyGapModel? _russianBrokenKeyModel;
     private readonly Dictionary<string, Dictionary<string, (string Word, long Count)>> _brokenIndexes = [];
     private readonly object _indexLock = new();
 
@@ -24,6 +25,9 @@ public sealed class CorrectionEngine
         _english = WordList.CreateFromFiles(Path.Combine(dictionaries, "en_US.dic"));
         _russianFrequency = FrequencyTable.Load(Path.Combine(frequencies, "ru_50k.txt"));
         _englishFrequency = FrequencyTable.Load(Path.Combine(frequencies, "en_50k.txt"));
+        _russianBrokenKeyModel = BrokenKeyGapModel.Load(
+            Path.Combine(resourceDirectory, "Models", "broken_key_gap_model.json"),
+            Path.Combine(resourceDirectory, "Models", "broken_key_vocabulary.bloom"));
     }
 
     public bool IsCorrect(string word, SupportedLanguage language, CorrectionOptions? options = null)
@@ -267,7 +271,24 @@ public sealed class CorrectionEngine
             : options.BrokenEnglishLetters;
         if (broken.Count == 0) return null;
 
+        // Word-only evidence cannot safely distinguish a valid word from a
+        // different word that lost a broken key (for example, "то"/"это").
+        // Never rewrite an existing dictionary or custom word automatically.
+        if (originalCorrect) return null;
+
         var frequency = Frequency(language);
+        if (language == SupportedLanguage.Russian &&
+            _russianBrokenKeyModel?.Supports(broken) == true)
+        {
+            var prediction = _russianBrokenKeyModel.Predict(
+                input,
+                broken,
+                options.MaximumMissingLetters,
+                candidate => IsCorrect(candidate, language, options),
+                frequency.Get);
+            if (prediction is not null) return prediction;
+        }
+
         var originalFrequency = frequency.Get(input);
         var index = BrokenIndex(language, options);
         var ranked = index.TryGetValue(input, out var indexed)
@@ -281,10 +302,6 @@ public sealed class CorrectionEngine
         if (valid.Count == 0) return null;
 
         var best = valid[0];
-        if (originalCorrect && (best.Count < 5_000 || best.Count < Math.Max(1, originalFrequency) * 50))
-        {
-            return null;
-        }
         var score = Math.Log10(best.Count + 1) * 20 + 50;
         return (best.Word, score);
     }

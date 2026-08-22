@@ -32,7 +32,7 @@ public sealed class CorrectionOptions
     public bool CorrectMissingSpaces { get; init; } = false;
     public bool RestoreBrokenKeys { get; init; } = true;
     public int MaximumMissingLetters { get; init; } = 3;
-    public ISet<char> BrokenRussianLetters { get; init; } = new HashSet<char>("при");
-    public ISet<char> BrokenEnglishLetters { get; init; } = new HashSet<char>("ghb");
+    public ISet<char> BrokenRussianLetters { get; init; } = new HashSet<char>("прэ");
+    public ISet<char> BrokenEnglishLetters { get; init; } = new HashSet<char>("gh'");
     public ISet<string> CustomWords { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 }
