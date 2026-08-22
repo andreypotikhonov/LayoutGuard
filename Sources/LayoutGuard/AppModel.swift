@@ -21,6 +21,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var observedKeyCount = 0
     @Published private(set) var correctionCount = 0
     @Published private(set) var lastCorrection: String?
+    private var totalObservedKeyCount = 0
 
     let excludedBundleIdentifiers: Set<String> = [
         "com.1password.1password",
@@ -72,7 +73,15 @@ final class AppModel: ObservableObject {
     }
 
     func recordObservedKey() {
-        observedKeyCount += 1
+        totalObservedKeyCount += 1
+        // Publishing on every key forces SwiftUI to redraw while CGEventTap is
+        // waiting. The value is diagnostic only, so update it in small batches.
+        if totalObservedKeyCount == 1 || totalObservedKeyCount.isMultiple(of: 32) {
+            let count = totalObservedKeyCount
+            DispatchQueue.main.async { [weak self] in
+                self?.observedKeyCount = count
+            }
+        }
     }
 
     func openAccessibilitySettings() {

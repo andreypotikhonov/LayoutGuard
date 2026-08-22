@@ -16,12 +16,18 @@ final class CorrectionEngine {
     private let typoCorrector = TypoCorrector()
 
     func layoutDecision(for word: String) -> CorrectionDecision? {
+        // This method runs while a key event is waiting to be delivered. Keep it
+        // strictly in-memory: Hunspell and NSSpellChecker are reserved for the
+        // full decision at a word boundary.
         guard word.count >= 5,
-              let decision = decision(for: word, correctTypos: false),
-              decision.reason == .wrongLayout else {
+              let layout = layoutDetector.correction(for: word) else {
             return nil
         }
-        return decision
+        return CorrectionDecision(
+            replacement: layout.replacement,
+            language: layout.targetLanguage,
+            reason: .wrongLayout
+        )
     }
 
     func isCorrectlySpelled(_ word: String, language: SupportedLanguage) -> Bool {
