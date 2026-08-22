@@ -34,9 +34,12 @@ Check(engine.Decide("неограненный", options) is null, "valid rare wo
 Check(engine.Decide("првиет", typoOptions)?.Replacement == "привет", "transposition");
 Check(engine.Decide("ривет", options)?.Replacement == "привет", "missing п");
 Check(engine.Decide("пивет", options)?.Replacement == "привет", "missing р");
-Check(engine.Decide("првет", options)?.Replacement == "привет", "missing и");
-Check(engine.Decide("ивет", options)?.Replacement == "привет", "missing пр");
-Check(engine.Decide("вет", options)?.Replacement == "привет", "missing при");
+Check(engine.Decide("првет", options) is null, "unconfigured missing и is not invented");
+Check(engine.Decide("ивет", options) is null, "valid dictionary word is never rewritten");
+Check(engine.Decide("кзамен", options)?.Replacement == "экзамен", "missing э at the start");
+Check(engine.Decide("лектрон", options)?.Replacement == "электрон", "second missing э at the start");
+Check(engine.Decide("кран", options) is null, "valid кран is not guessed as экран");
+Check(engine.Decide("превет", options) is null, "ordinary typo is not rewritten by broken-key model");
 Check(engine.Decide("сетифика", certificateOptions)?.Replacement == "сертификат",
     "two configured broken keys inside and at the end");
 Check(engine.Decide("потести", missingSpaceOptions)?.Reason != CorrectionReason.MissingSpace,
