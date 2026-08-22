@@ -185,10 +185,26 @@ public sealed class CorrectionEngine
         for (var wordCount = 2; wordCount <= 4; wordCount++)
         {
             var result = best[input.Length, wordCount];
-            if (result is null || result.Value.Words.All(word => word.Length < 3)) continue;
+            if (result is null || !IsSafeMissingSpaceSegmentation(result.Value.Words)) continue;
             return (string.Join(' ', result.Value.Words), result.Value.Score);
         }
         return null;
+    }
+
+    private static bool IsSafeMissingSpaceSegmentation(IReadOnlyList<string> words)
+    {
+        // Automatic segmentation is intentionally narrow. Short dictionary
+        // fragments are extremely easy to assemble from a perfectly normal
+        // unknown word (for example, "потести" -> "по тест и").
+        if (words.Count == 2)
+        {
+            return words[0].Length >= 3 && words[1].Length >= 3;
+        }
+        if (words.Count == 3)
+        {
+            return words[0].Length >= 4 && words[1].Length == 1 && words[2].Length >= 4;
+        }
+        return false;
     }
 
     /// <summary>

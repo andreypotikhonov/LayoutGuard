@@ -28,8 +28,8 @@ public sealed record PhraseCorrection(
 
 public sealed class CorrectionOptions
 {
-    public bool CorrectTypos { get; init; } = true;
-    public bool CorrectMissingSpaces { get; init; } = true;
+    public bool CorrectTypos { get; init; } = false;
+    public bool CorrectMissingSpaces { get; init; } = false;
     public bool RestoreBrokenKeys { get; init; } = true;
     public int MaximumMissingLetters { get; init; } = 3;
     public ISet<char> BrokenRussianLetters { get; init; } = new HashSet<char>("при");
