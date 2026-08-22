@@ -24,6 +24,10 @@ final class CorrectionEngine {
         return decision
     }
 
+    func isCorrectlySpelled(_ word: String, language: SupportedLanguage) -> Bool {
+        typoCorrector.isCorrectlySpelled(word, language: language)
+    }
+
     func decision(for word: String, correctTypos: Bool) -> CorrectionDecision? {
         var originalIsCorrectlySpelled = false
         if let currentLanguage = LayoutConverter.language(of: word) {

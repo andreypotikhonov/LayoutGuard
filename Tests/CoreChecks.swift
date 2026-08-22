@@ -5,6 +5,7 @@ enum CoreChecks {
     static func main() {
         check(LayoutConverter.convert("ghbdtn", to: .russian) == "привет", "ghbdtn → привет")
         check(LayoutConverter.convert("руддщ", to: .english) == "hello", "руддщ → hello")
+        check(LayoutConverter.convert("[jnz", to: .russian) == "хотя", "[jnz → хотя")
         check(
             LayoutConverter.convert("lf z levf", to: .russian) == "да я дума",
             "convert the whole sentence prefix"
@@ -17,6 +18,14 @@ enum CoreChecks {
         check(LayoutDetector().correction(for: "привет") == nil, "keep valid Russian")
         check(LayoutDetector().correction(for: "today") == nil, "keep another valid English word")
         check(LayoutDetector().correction(for: "работа") == nil, "keep another valid Russian word")
+        check(
+            LayoutConverter.needsWordBoundary(between: "xcode", and: "х"),
+            "separate Latin and Cyrillic words"
+        )
+        check(
+            !LayoutConverter.needsWordBoundary(between: "xcode", and: "x"),
+            "keep a Latin word together"
+        )
         check(EditDistance.damerauLevenshtein("привет", "првиет") == 1, "transposition")
         print("Core checks passed")
     }

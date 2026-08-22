@@ -47,4 +47,12 @@ enum LayoutConverter {
         guard max(latinCount, cyrillicCount) > 0 else { return nil }
         return latinCount >= cyrillicCount ? .english : .russian
     }
+
+    static func needsWordBoundary(between left: String, and right: String) -> Bool {
+        guard let leftLanguage = language(of: left),
+              let rightLanguage = language(of: right) else {
+            return false
+        }
+        return leftLanguage != rightLanguage
+    }
 }

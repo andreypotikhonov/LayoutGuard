@@ -3,6 +3,12 @@ import CoreGraphics
 import Foundation
 
 final class KeyboardMonitor {
+    private struct PrefixConversion {
+        let original: String
+        let replacement: String
+        let utf16Length: Int
+    }
+
     private let correctionEngine = CorrectionEngine()
     private weak var model: AppModel?
     private var eventTap: CFMachPort?
@@ -117,19 +123,54 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
-        if text.allSatisfy({ $0.isLetter || $0 == "-" || $0 == "'" }) {
+        if text.allSatisfy({ $0.isLetter || $0 == "-" || $0 == "'" }) ||
+            canStartWrongLayoutWord(with: text) {
+            if text.allSatisfy({ $0.isLetter }),
+               LayoutConverter.needsWordBoundary(between: currentWord, and: text) {
+                let previousWord = currentWord
+                let decision = correctionEngine.decision(
+                    for: previousWord,
+                    correctTypos: model.correctTypos
+                )
+                let correctedPreviousWord = decision?.replacement ?? previousWord
+                let replacedLength = decision == nil ? 0 : previousWord.utf16.count
+                let insertedText = (decision == nil ? "" : correctedPreviousWord) + " " + text
+
+                TextInjector.replacePreviousText(
+                    utf16Length: replacedLength,
+                    with: insertedText
+                )
+                appendToSentence(correctedPreviousWord + " ")
+                currentWord = text
+
+                if let decision {
+                    let switchedLayout = decision.reason == .wrongLayout
+                        ? InputSourceController.select(decision.language)
+                        : nil
+                    model.recordCorrection(
+                        original: previousWord,
+                        replacement: correctedPreviousWord,
+                        switchedLayout: switchedLayout
+                    )
+                }
+                return nil
+            }
+
             currentWord.append(contentsOf: text)
             if currentWord.count > 64 { currentWord = "" }
 
             if currentWord.count >= 5,
                let decision = correctionEngine.layoutDecision(for: currentWord) {
                 let original = currentWord
-                let originalPhrase = sentencePrefix + original
-                let convertedPrefix = convertedSentencePrefix(to: decision.language)
-                let replacementPhrase = convertedPrefix + decision.replacement
-                let previouslyDeliveredLength = sentencePrefix.utf16.count +
+                let prefixConversion = safelyConvertedSentencePrefix(to: decision.language)
+                let originalPhrase = prefixConversion.map { $0.original + original } ?? original
+                let replacementPhrase = (prefixConversion?.replacement ?? "") +
+                    decision.replacement
+                let previouslyDeliveredLength = (prefixConversion?.utf16Length ?? 0) +
                     max(0, original.utf16.count - text.utf16.count)
-                sentencePrefix = convertedPrefix
+                if let prefixConversion {
+                    apply(prefixConversion)
+                }
                 currentWord = decision.replacement
 
                 TextInjector.replacePreviousText(
@@ -167,15 +208,25 @@ final class KeyboardMonitor {
         let original: String
         let correctedText: String
         let replacedLength: Int
+        let sentenceAppendText: String
         if decision.reason == .wrongLayout {
-            let convertedPrefix = convertedSentencePrefix(to: decision.language)
-            original = sentencePrefix + word
-            correctedText = convertedPrefix + decision.replacement
-            replacedLength = sentencePrefix.utf16.count + word.utf16.count
+            if let prefixConversion = safelyConvertedSentencePrefix(to: decision.language) {
+                original = prefixConversion.original + word
+                correctedText = prefixConversion.replacement + decision.replacement
+                replacedLength = prefixConversion.utf16Length + word.utf16.count
+                sentenceAppendText = decision.replacement + text
+                apply(prefixConversion)
+            } else {
+                original = word
+                correctedText = decision.replacement
+                replacedLength = word.utf16.count
+                sentenceAppendText = correctedText + text
+            }
         } else {
             original = word
             correctedText = decision.replacement
             replacedLength = word.utf16.count
+            sentenceAppendText = correctedText + text
         }
 
         TextInjector.replacePreviousText(
@@ -190,26 +241,66 @@ final class KeyboardMonitor {
             replacement: correctedText,
             switchedLayout: switchedLayout
         )
-        appendToSentence(correctedText + text, replacingCurrentPrefix: decision.reason == .wrongLayout)
+        appendToSentence(sentenceAppendText)
 
         return nil
     }
 
-    private func convertedSentencePrefix(to language: SupportedLanguage) -> String {
-        LayoutConverter.convert(sentencePrefix, to: language) ?? sentencePrefix
+    private func safelyConvertedSentencePrefix(
+        to language: SupportedLanguage
+    ) -> PrefixConversion? {
+        let prefix = sentencePrefix as NSString
+        let fullRange = NSRange(location: 0, length: prefix.length)
+        guard let expression = try? NSRegularExpression(pattern: "\\p{L}+") else {
+            return nil
+        }
+        let matches = expression.matches(in: sentencePrefix, range: fullRange)
+        guard !matches.isEmpty else { return nil }
+
+        var suffixLocation = prefix.length
+        let sourceLanguage: SupportedLanguage = language == .russian ? .english : .russian
+        for match in matches.reversed() {
+            let string = prefix.substring(with: match.range)
+            guard LayoutConverter.language(of: string) == sourceLanguage,
+                  let converted = LayoutConverter.convert(string, to: language) else {
+                break
+            }
+            guard correctionEngine.isCorrectlySpelled(converted, language: language) else {
+                break
+            }
+            suffixLocation = match.range.location
+        }
+
+        guard suffixLocation < prefix.length else { return nil }
+        let original = prefix.substring(from: suffixLocation)
+        guard let replacement = LayoutConverter.convert(original, to: language) else {
+            return nil
+        }
+        return PrefixConversion(
+            original: original,
+            replacement: replacement,
+            utf16Length: prefix.length - suffixLocation
+        )
     }
 
-    private func appendToSentence(_ text: String, replacingCurrentPrefix: Bool = false) {
+    private func apply(_ conversion: PrefixConversion) {
+        let prefix = sentencePrefix as NSString
+        let untouchedLength = prefix.length - conversion.utf16Length
+        sentencePrefix = prefix.substring(to: untouchedLength) + conversion.replacement
+    }
+
+    private func canStartWrongLayoutWord(with text: String) -> Bool {
+        guard currentWord.isEmpty, text.count == 1 else { return false }
+        return "[];,.'".contains(text)
+    }
+
+    private func appendToSentence(_ text: String) {
         if isSentenceBoundary(text) {
             sentencePrefix = ""
             return
         }
 
-        if replacingCurrentPrefix {
-            sentencePrefix = text
-        } else {
-            sentencePrefix.append(contentsOf: text)
-        }
+        sentencePrefix.append(contentsOf: text)
 
         if sentencePrefix.count > maximumSentenceLength {
             sentencePrefix = ""

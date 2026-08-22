@@ -33,8 +33,8 @@ targets:
         SWIFT_INCLUDE_PATHS: "$(PROJECT_DIR)/Sources/CHunspell"
         LIBRARY_SEARCH_PATHS: "$(PROJECT_DIR)/Vendor/Hunspell/lib"
         OTHER_LDFLAGS: "-lhunspell-1.7 -lc++"
-        MARKETING_VERSION: "0.4.1"
-        CURRENT_PROJECT_VERSION: "7"
+        MARKETING_VERSION: "0.4.2"
+        CURRENT_PROJECT_VERSION: "8"
     scheme:
       testTargets:
         - LayoutGuardTests

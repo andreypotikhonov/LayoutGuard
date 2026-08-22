@@ -60,6 +60,10 @@ enum SpellingChecks {
         check(engine.layoutDecision(for: "hel") == nil, "do not live-switch an English prefix")
         check(engine.layoutDecision(for: "hell") == nil, "keep a valid English prefix")
         check(engine.layoutDecision(for: "hello") == nil, "do not live-switch valid English")
+        check(
+            engine.decision(for: "[jnz", correctTypos: true)?.replacement == "хотя",
+            "convert a wrong-layout word beginning with a punctuation key"
+        )
 
         let combined = engine.decision(for: "hfccrkflre", correctTypos: true)
         check(combined?.replacement == "раскладку", "fix layout and typo together")
