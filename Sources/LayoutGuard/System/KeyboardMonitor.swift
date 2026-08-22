@@ -16,10 +16,33 @@ final class KeyboardMonitor {
     private var currentWord = ""
     private var sentencePrefix = ""
     private var currentApplicationIdentifier: String?
+    private var applicationObserver: NSObjectProtocol?
+    private var secureFieldFocused = false
+    private var secureFieldRefreshWorkItem: DispatchWorkItem?
     private let maximumSentenceLength = 512
 
     init(model: AppModel) {
         self.model = model
+        currentApplicationIdentifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        applicationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self else { return }
+            let application = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
+                as? NSRunningApplication
+            self.currentApplicationIdentifier = application?.bundleIdentifier
+            self.resetInputContext()
+            self.scheduleSecureFieldRefresh()
+        }
+    }
+
+    deinit {
+        secureFieldRefreshWorkItem?.cancel()
+        if let applicationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(applicationObserver)
+        }
     }
 
     func start() -> Bool {
@@ -53,6 +76,7 @@ final class KeyboardMonitor {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+        refreshSecureFieldStatus()
         return true
     }
 
@@ -80,6 +104,7 @@ final class KeyboardMonitor {
 
         guard type == .keyDown else {
             resetInputContext()
+            scheduleSecureFieldRefresh()
             return Unmanaged.passUnretained(event)
         }
 
@@ -90,25 +115,26 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
-        let applicationIdentifier = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        if applicationIdentifier != currentApplicationIdentifier {
-            resetInputContext()
-            currentApplicationIdentifier = applicationIdentifier
-        }
-
-        if isExcludedApplication(identifier: applicationIdentifier, model: model) ||
-            SecureFieldDetector.isSecureFieldFocused() {
-            resetInputContext()
-            return Unmanaged.passUnretained(event)
-        }
-
         let flags = event.flags
         if flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate) {
             resetInputContext()
+            scheduleSecureFieldRefresh()
             return Unmanaged.passUnretained(event)
         }
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        if keyCode == 48 { // Tab can move focus into or out of a password field.
+            resetInputContext()
+            scheduleSecureFieldRefresh()
+            return Unmanaged.passUnretained(event)
+        }
+
+        if isExcludedApplication(identifier: currentApplicationIdentifier, model: model) ||
+            secureFieldFocused {
+            resetInputContext()
+            return Unmanaged.passUnretained(event)
+        }
+
         if keyCode == 51 {
             if !currentWord.isEmpty {
                 currentWord.removeLast()
@@ -316,6 +342,20 @@ final class KeyboardMonitor {
     private func resetInputContext() {
         currentWord = ""
         sentencePrefix = ""
+    }
+
+    private func scheduleSecureFieldRefresh() {
+        secureFieldRefreshWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.refreshSecureFieldStatus()
+        }
+        secureFieldRefreshWorkItem = workItem
+        // Focus is updated just after the mouse/shortcut event reaches the app.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.04, execute: workItem)
+    }
+
+    private func refreshSecureFieldStatus() {
+        secureFieldFocused = SecureFieldDetector.isSecureFieldFocused()
     }
 
     private func unicodeString(from event: CGEvent) -> String? {
