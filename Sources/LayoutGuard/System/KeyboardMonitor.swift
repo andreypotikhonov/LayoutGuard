@@ -64,6 +64,8 @@ final class KeyboardMonitor {
             return Unmanaged.passUnretained(event)
         }
 
+        model?.recordObservedKey()
+
         guard let model, model.isEnabled, model.hasAccessibilityPermission else {
             currentWord = ""
             return Unmanaged.passUnretained(event)
@@ -94,6 +96,29 @@ final class KeyboardMonitor {
         if text.allSatisfy({ $0.isLetter || $0 == "-" || $0 == "'" }) {
             currentWord.append(contentsOf: text)
             if currentWord.count > 64 { currentWord = "" }
+
+            if currentWord.count >= 3,
+               let decision = correctionEngine.layoutDecision(for: currentWord) {
+                let original = currentWord
+                let previouslyDeliveredLength = max(0, original.utf16.count - text.utf16.count)
+                currentWord = decision.replacement
+
+                DispatchQueue.main.async {
+                    let switchedLayout = InputSourceController.select(decision.language)
+                    TextInjector.replacePreviousText(
+                        utf16Length: previouslyDeliveredLength,
+                        with: decision.replacement
+                    )
+                    model.recordCorrection(
+                        original: original,
+                        replacement: decision.replacement,
+                        switchedLayout: switchedLayout
+                    )
+                }
+
+                return nil
+            }
+
             return Unmanaged.passUnretained(event)
         }
 

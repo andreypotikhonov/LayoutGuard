@@ -32,6 +32,15 @@ struct LayoutGuardApp: App {
                 }
             }
 
+            if model.hasAccessibilityPermission {
+                Label(
+                    model.inputMonitorActive ? "Перехват ввода активен" : "Перехват ввода не запущен",
+                    systemImage: model.inputMonitorActive ? "waveform.path.ecg" : "exclamationmark.triangle"
+                )
+                Text("Получено клавиш: \(model.observedKeyCount)")
+                    .foregroundStyle(.secondary)
+            }
+
             if let correction = model.lastCorrection {
                 Text(correction)
                     .foregroundStyle(.secondary)

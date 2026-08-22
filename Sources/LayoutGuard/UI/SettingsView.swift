@@ -17,6 +17,14 @@ struct SettingsView: View {
                     Text(model.hasAccessibilityPermission ? "Разрешение получено" : "Требуется разрешение Accessibility")
                 }
 
+                if model.hasAccessibilityPermission {
+                    LabeledContent(
+                        "Перехват ввода",
+                        value: model.inputMonitorActive ? "Активен" : "Не запущен"
+                    )
+                    LabeledContent("Получено клавиш", value: "\(model.observedKeyCount)")
+                }
+
                 if !model.hasAccessibilityPermission {
                     HStack {
                         Button("Запросить разрешение") { model.requestAccessibilityPermission() }

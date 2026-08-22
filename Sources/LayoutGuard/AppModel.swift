@@ -17,6 +17,8 @@ final class AppModel: ObservableObject {
     }
 
     @Published private(set) var hasAccessibilityPermission = false
+    @Published private(set) var inputMonitorActive = false
+    @Published private(set) var observedKeyCount = 0
     @Published private(set) var correctionCount = 0
     @Published private(set) var lastCorrection: String?
 
@@ -32,6 +34,8 @@ final class AppModel: ObservableObject {
         static let enabled = "isEnabled"
         static let correctTypos = "correctTypos"
         static let correctionCount = "correctionCount"
+        static let accessibilityDiagnostic = "accessibilityDiagnostic"
+        static let inputMonitorDiagnostic = "inputMonitorDiagnostic"
     }
 
     private init() {
@@ -63,7 +67,12 @@ final class AppModel: ObservableObject {
 
     func refreshPermission() {
         hasAccessibilityPermission = AccessibilityPermission.isGranted
+        UserDefaults.standard.set(hasAccessibilityPermission, forKey: Keys.accessibilityDiagnostic)
         updateMonitoring()
+    }
+
+    func recordObservedKey() {
+        observedKeyCount += 1
     }
 
     func openAccessibilitySettings() {
@@ -86,8 +95,11 @@ final class AppModel: ObservableObject {
     private func updateMonitoring() {
         guard isEnabled, hasAccessibilityPermission else {
             keyboardMonitor.stop()
+            inputMonitorActive = false
+            UserDefaults.standard.set(false, forKey: Keys.inputMonitorDiagnostic)
             return
         }
-        _ = keyboardMonitor.start()
+        inputMonitorActive = keyboardMonitor.start()
+        UserDefaults.standard.set(inputMonitorActive, forKey: Keys.inputMonitorDiagnostic)
     }
 }

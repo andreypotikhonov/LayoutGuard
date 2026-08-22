@@ -15,6 +15,14 @@ final class CorrectionEngine {
     private let layoutDetector = LayoutDetector()
     private let typoCorrector = TypoCorrector()
 
+    func layoutDecision(for word: String) -> CorrectionDecision? {
+        guard let decision = decision(for: word, correctTypos: true),
+              decision.reason == .wrongLayout else {
+            return nil
+        }
+        return decision
+    }
+
     func decision(for word: String, correctTypos: Bool) -> CorrectionDecision? {
         var originalIsCorrectlySpelled = false
         if let currentLanguage = LayoutConverter.language(of: word) {

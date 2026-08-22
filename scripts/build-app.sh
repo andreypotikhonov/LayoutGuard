@@ -29,7 +29,13 @@ done
 iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/AppIcon.icns"
 rm -rf "$ICONSET"
 
-codesign --force --deep --sign - "$APP_BUNDLE"
+LOCAL_SIGNING_IDENTITY="LayoutGuard Local Signing"
+if security find-identity -v -p codesigning | grep -Fq "\"$LOCAL_SIGNING_IDENTITY\""; then
+    codesign --force --deep --sign "$LOCAL_SIGNING_IDENTITY" "$APP_BUNDLE"
+else
+    echo "warning: $LOCAL_SIGNING_IDENTITY not found; using an ad-hoc signature" >&2
+    codesign --force --deep --sign - "$APP_BUNDLE"
+fi
 codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
 
 rm -f "$DIST_DIR/$APP_NAME.zip"
