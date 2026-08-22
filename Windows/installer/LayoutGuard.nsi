@@ -2,7 +2,7 @@ Unicode True
 SetCompressor /SOLID lzma
 
 !define APP_NAME "LayoutGuard"
-!define APP_VERSION "0.2.0"
+!define APP_VERSION "0.2.1"
 !define APP_EXE "LayoutGuard.exe"
 
 Name "${APP_NAME}"
@@ -18,6 +18,8 @@ UninstPage instfiles
 
 Section "LayoutGuard" SEC_MAIN
   SetShellVarContext current
+  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /IM "${APP_EXE}" /F'
+  Sleep 300
   SetOutPath "$INSTDIR"
   File /r "..\artifacts\publish\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -33,6 +35,8 @@ SectionEnd
 
 Section "Uninstall"
   SetShellVarContext current
+  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /IM "${APP_EXE}" /F'
+  Sleep 300
   Delete "$SMPROGRAMS\LayoutGuard\LayoutGuard.lnk"
   Delete "$SMPROGRAMS\LayoutGuard\Удалить LayoutGuard.lnk"
   RMDir "$SMPROGRAMS\LayoutGuard"
