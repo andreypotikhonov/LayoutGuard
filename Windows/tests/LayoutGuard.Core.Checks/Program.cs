@@ -5,6 +5,12 @@ if (!Directory.Exists(root))
 {
     root = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "src/LayoutGuard.Windows/Resources"));
 }
+if (!Directory.Exists(root))
+{
+    root = Path.GetFullPath(Path.Combine(
+        Directory.GetCurrentDirectory(),
+        "Windows/src/LayoutGuard.Windows/Resources"));
+}
 var engine = new CorrectionEngine(root);
 var options = new CorrectionOptions();
 
