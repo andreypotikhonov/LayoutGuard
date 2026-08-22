@@ -41,7 +41,9 @@ jobs:
       - name: Build installer
         if: startsWith(github.ref, 'refs/tags/v')
         shell: pwsh
-        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" Windows\installer\LayoutGuard.iss'
+        run: |
+          choco install nsis -y
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" Windows\installer\LayoutGuard.nsi
 
       - name: Upload build artifact
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
