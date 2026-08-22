@@ -6,6 +6,8 @@ namespace LayoutGuard.Core;
 
 public sealed class CorrectionEngine
 {
+    private const long EarlyLayoutMinimumPopularity = 10_000;
+    private const long EarlyLayoutPopularityRatio = 50;
     private readonly WordList _russian;
     private readonly WordList _english;
     private readonly FrequencyTable _russianFrequency;
@@ -66,16 +68,6 @@ public sealed class CorrectionEngine
             }
         }
 
-        if (!originalCorrect && options.CorrectMissingSpaces)
-        {
-            var spaced = BestMissingSpaceCandidate(normalized, language.Value, options);
-            if (spaced is not null)
-            {
-                return Decision(word, spaced.Value.Word, language.Value,
-                    CorrectionReason.MissingSpace, spaced.Value.Score);
-            }
-        }
-
         if (options.RestoreBrokenKeys)
         {
             var restored = BestBrokenKeyCandidate(normalized, language.Value, options, originalCorrect);
@@ -83,6 +75,16 @@ public sealed class CorrectionEngine
             {
                 return Decision(word, restored.Value.Word, language.Value,
                     CorrectionReason.MissingBrokenKey, restored.Value.Score);
+            }
+        }
+
+        if (!originalCorrect && options.CorrectMissingSpaces)
+        {
+            var spaced = BestMissingSpaceCandidate(normalized, language.Value, options);
+            if (spaced is not null)
+            {
+                return Decision(word, spaced.Value.Word, language.Value,
+                    CorrectionReason.MissingSpace, spaced.Value.Score);
             }
         }
 
@@ -111,6 +113,38 @@ public sealed class CorrectionEngine
             CustomWords = options.CustomWords
         });
         return decision?.Reason == CorrectionReason.WrongLayout ? decision : null;
+    }
+
+    /// <summary>
+    /// Detects an unambiguous wrong-layout prefix before the complete word has
+    /// been typed. A conversion is only offered when the converted prefix is
+    /// common and overwhelmingly more likely than the literal prefix.
+    /// </summary>
+    public CorrectionDecision? EarlyLayoutDecision(string word, CorrectionOptions options)
+    {
+        if (word.Length is < 4 or > 12) return null;
+        var normalized = word.ToLowerInvariant();
+        if (options.CustomWords.Any(custom => custom.StartsWith(normalized, StringComparison.OrdinalIgnoreCase)))
+            return null;
+        var source = KeyboardLayoutConverter.DetectLanguage(normalized);
+        if (source is null) return null;
+
+        var target = source == SupportedLanguage.English
+            ? SupportedLanguage.Russian
+            : SupportedLanguage.English;
+        var converted = KeyboardLayoutConverter.Convert(normalized, target);
+        if (converted is null || KeyboardLayoutConverter.DetectLanguage(converted) != target)
+            return null;
+
+        var sourcePopularity = Frequency(source.Value).GetPrefixPopularity(normalized);
+        var targetPopularity = Frequency(target).GetPrefixPopularity(converted);
+        if (targetPopularity < EarlyLayoutMinimumPopularity ||
+            targetPopularity < Math.Max(1, sourcePopularity) * EarlyLayoutPopularityRatio)
+        {
+            return null;
+        }
+
+        return Decision(word, converted, target, CorrectionReason.WrongLayout, targetPopularity);
     }
 
     private (string Word, double Score)? BestMissingSpaceCandidate(
