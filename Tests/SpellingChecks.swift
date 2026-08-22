@@ -23,6 +23,14 @@ enum SpellingChecks {
             "fix transposed letters"
         )
         check(
+            engine.decision(for: "ривет", correctTypos: true)?.replacement == "привет",
+            "restore a missing first letter"
+        )
+        check(
+            engine.decision(for: "приве", correctTypos: true)?.replacement == "привет",
+            "restore a missing last letter"
+        )
+        check(
             engine.decision(for: "раскалдку", correctTypos: true)?.replacement == "раскладку",
             "fix a transposition in a longer word"
         )
@@ -37,6 +45,10 @@ enum SpellingChecks {
         check(
             engine.decision(for: "имер", correctTypos: true) == nil,
             "do not replace a short Russian typo with an unrelated word"
+        )
+        check(
+            engine.decision(for: "привета", correctTypos: true) == nil,
+            "do not delete an extra last letter"
         )
 
         let russianLayout = engine.decision(for: "ghbdtn", correctTypos: true)
