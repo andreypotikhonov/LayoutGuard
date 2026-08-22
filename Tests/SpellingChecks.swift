@@ -22,6 +22,14 @@ enum SpellingChecks {
             engine.decision(for: "раскалдкку", correctTypos: true)?.replacement == "раскладку",
             "fix two errors in a longer word"
         )
+        check(
+            engine.decision(for: "нпример", correctTypos: true)?.replacement == "например",
+            "insert a missing letter instead of deleting the first letter"
+        )
+        check(
+            engine.decision(for: "имер", correctTypos: true) == nil,
+            "do not replace a short Russian typo with an unrelated word"
+        )
 
         let russianLayout = engine.decision(for: "ghbdtn", correctTypos: true)
         check(russianLayout?.replacement == "привет", "detect Russian layout")
@@ -39,6 +47,7 @@ enum SpellingChecks {
 
         check(engine.decision(for: "hello", correctTypos: true) == nil, "keep valid English")
         check(engine.decision(for: "привет", correctTypos: true) == nil, "keep valid Russian")
+        check(engine.decision(for: "пример", correctTypos: true) == nil, "keep another valid Russian word")
         check(engine.decision(for: "computer", correctTypos: true) == nil, "keep longer English word")
         check(engine.decision(for: "сегодня", correctTypos: true) == nil, "keep longer Russian word")
         print("Spelling checks passed")

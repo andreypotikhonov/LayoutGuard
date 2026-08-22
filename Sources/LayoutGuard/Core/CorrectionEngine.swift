@@ -36,6 +36,7 @@ final class CorrectionEngine {
             if !originalIsCorrectlySpelled,
                let converted = LayoutConverter.convert(word, to: targetLanguage) {
                 if correctTypos,
+                   word.count >= 7,
                    let correctedConverted = typoCorrector.correction(
                     for: converted,
                     language: targetLanguage

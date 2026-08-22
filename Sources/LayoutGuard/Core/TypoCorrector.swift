@@ -39,7 +39,7 @@ final class TypoCorrector {
             return matchingCase(of: word, replacement: explicit)
         }
 
-        guard word.count >= 4,
+        guard word.count >= 5,
               word.rangeOfCharacter(from: .letters.inverted) == nil else {
             return nil
         }
@@ -72,7 +72,9 @@ final class TypoCorrector {
             let normalizedCandidate = candidate.lowercased()
             guard normalizedCandidate != normalized,
                   LayoutConverter.language(of: normalizedCandidate) == language,
-                  normalizedCandidate.rangeOfCharacter(from: .letters.inverted) == nil else {
+                  normalizedCandidate.rangeOfCharacter(from: .letters.inverted) == nil,
+                  normalizedCandidate.first == normalized.first,
+                  normalizedCandidate.last == normalized.last else {
                 return nil
             }
 
