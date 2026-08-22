@@ -68,8 +68,8 @@ internal sealed class LowLevelInputHook : IDisposable
     {
         var state = new byte[256];
         if (!NativeMethods.GetKeyboardState(state)) return string.Empty;
-        var foreground = NativeMethods.GetForegroundWindow();
-        var thread = NativeMethods.GetWindowThreadProcessId(foreground, out _);
+        var focused = NativeMethods.GetFocusedInputWindow();
+        var thread = NativeMethods.GetWindowThreadProcessId(focused, out _);
         var layout = NativeMethods.GetKeyboardLayout(thread);
         var buffer = new StringBuilder(8);
         var count = NativeMethods.ToUnicodeEx(
@@ -85,4 +85,3 @@ internal sealed class LowLevelInputHook : IDisposable
         _mouseHook = IntPtr.Zero;
     }
 }
-

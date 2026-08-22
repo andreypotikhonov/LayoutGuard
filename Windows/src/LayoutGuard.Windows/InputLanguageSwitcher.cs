@@ -8,12 +8,12 @@ internal static class InputLanguageSwitcher
     {
         var layoutId = language == SupportedLanguage.Russian ? "00000419" : "00000409";
         var layout = NativeMethods.LoadKeyboardLayout(layoutId, NativeMethods.KlfActivate);
-        var foreground = NativeMethods.GetForegroundWindow();
-        if (layout == IntPtr.Zero || foreground == IntPtr.Zero) return false;
+        var focused = NativeMethods.GetFocusedInputWindow();
+        if (layout == IntPtr.Zero || focused == IntPtr.Zero) return false;
 
-        var thread = NativeMethods.GetWindowThreadProcessId(foreground, out _);
+        var thread = NativeMethods.GetWindowThreadProcessId(focused, out _);
         var delivered = NativeMethods.SendMessageTimeout(
-            foreground,
+            focused,
             NativeMethods.WmInputLangChangeRequest,
             IntPtr.Zero,
             layout,

@@ -4,9 +4,11 @@ namespace LayoutGuard.Windows;
 
 public sealed class AppSettings
 {
+    public const int CurrentSettingsVersion = 2;
+    public int SettingsVersion { get; set; } = CurrentSettingsVersion;
     public bool Enabled { get; set; } = true;
-    public bool CorrectTypos { get; set; } = true;
-    public bool CorrectMissingSpaces { get; set; } = true;
+    public bool CorrectTypos { get; set; } = false;
+    public bool CorrectMissingSpaces { get; set; } = false;
     public bool RestoreBrokenKeys { get; set; } = true;
     public int MaximumMissingLetters { get; set; } = 3;
     public string BrokenRussianLetters { get; set; } = "при";

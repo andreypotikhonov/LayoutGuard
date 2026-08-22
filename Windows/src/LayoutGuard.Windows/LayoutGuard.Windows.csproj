@@ -10,7 +10,7 @@
     <AssemblyName>LayoutGuard</AssemblyName>
     <RootNamespace>LayoutGuard.Windows</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../LayoutGuard.Core/LayoutGuard.Core.csproj" />

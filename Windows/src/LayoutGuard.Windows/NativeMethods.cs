@@ -40,6 +40,10 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo info);
+
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 
@@ -83,6 +87,14 @@ internal static class NativeMethods
         uint timeout,
         out UIntPtr result);
 
+    public static IntPtr GetFocusedInputWindow()
+    {
+        var info = new GuiThreadInfo { Size = (uint)Marshal.SizeOf<GuiThreadInfo>() };
+        return GetGUIThreadInfo(0, ref info) && info.Focus != IntPtr.Zero
+            ? info.Focus
+            : GetForegroundWindow();
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct KeyboardHookData
     {
@@ -91,6 +103,29 @@ internal static class NativeMethods
         public uint Flags;
         public uint Time;
         public UIntPtr ExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct GuiThreadInfo
+    {
+        public uint Size;
+        public uint Flags;
+        public IntPtr Active;
+        public IntPtr Focus;
+        public IntPtr Capture;
+        public IntPtr MenuOwner;
+        public IntPtr MoveSize;
+        public IntPtr Caret;
+        public Rect CaretRectangle;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
     }
 
     [StructLayout(LayoutKind.Sequential)]

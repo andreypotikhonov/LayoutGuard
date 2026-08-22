@@ -15,7 +15,23 @@ internal static class SettingsStore
         {
             if (File.Exists(FilePath))
             {
-                return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
+                var json = File.ReadAllText(FilePath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                using var document = JsonDocument.Parse(json);
+                var version = document.RootElement.TryGetProperty(nameof(AppSettings.SettingsVersion), out var value)
+                    ? value.GetInt32()
+                    : 0;
+                if (version < AppSettings.CurrentSettingsVersion)
+                {
+                    // Earlier builds enabled speculative word segmentation
+                    // and general spelling replacement, which could turn an
+                    // unknown word into unrelated dictionary fragments/words.
+                    settings.CorrectTypos = false;
+                    settings.CorrectMissingSpaces = false;
+                    settings.SettingsVersion = AppSettings.CurrentSettingsVersion;
+                    Save(settings);
+                }
+                return settings;
             }
         }
         catch { }
@@ -31,4 +47,3 @@ internal static class SettingsStore
         }));
     }
 }
-
