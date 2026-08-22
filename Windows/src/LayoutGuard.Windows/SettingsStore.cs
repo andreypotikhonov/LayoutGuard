@@ -28,6 +28,15 @@ internal static class SettingsStore
                     // unknown word into unrelated dictionary fragments/words.
                     settings.CorrectTypos = false;
                     settings.CorrectMissingSpaces = false;
+                    // Version 3 replaces the old default `при` with the user's
+                    // actual three non-working keys `прэ`. Preserve any other
+                    // custom selection made in the settings window.
+                    if (version < 3 && (settings.BrokenRussianLetters == "при" ||
+                        string.IsNullOrWhiteSpace(settings.BrokenRussianLetters)))
+                    {
+                        settings.BrokenRussianLetters = "прэ";
+                        settings.BrokenEnglishLetters = "gh'";
+                    }
                     settings.SettingsVersion = AppSettings.CurrentSettingsVersion;
                     Save(settings);
                 }
