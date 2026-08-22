@@ -13,6 +13,16 @@ if (!Directory.Exists(root))
 }
 var engine = new CorrectionEngine(root);
 var options = new CorrectionOptions();
+var typoOptions = new CorrectionOptions { CorrectTypos = true };
+var missingSpaceOptions = new CorrectionOptions { CorrectMissingSpaces = true };
+var certificateOptions = new CorrectionOptions
+{
+    CorrectTypos = false,
+    CorrectMissingSpaces = true,
+    RestoreBrokenKeys = true,
+    MaximumMissingLetters = 3,
+    BrokenRussianLetters = new HashSet<char>("рт")
+};
 
 Check(KeyboardLayoutConverter.Convert("ghbdtn", SupportedLanguage.Russian) == "привет", "layout ru");
 Check(KeyboardLayoutConverter.Convert("[jnz", SupportedLanguage.Russian) == "хотя", "punctuation layout key");
@@ -21,13 +31,29 @@ Check(engine.EarlyLayoutDecision("ghbd", options)?.Replacement == "прив", "e
 Check(engine.EarlyLayoutDecision("рудд", options)?.Replacement == "hell", "early layout en");
 Check(engine.EarlyLayoutDecision("hell", options) is null, "valid source prefix stays unchanged");
 Check(engine.Decide("неограненный", options) is null, "valid rare word");
-Check(engine.Decide("првиет", options)?.Replacement == "привет", "transposition");
+Check(engine.Decide("првиет", typoOptions)?.Replacement == "привет", "transposition");
 Check(engine.Decide("ривет", options)?.Replacement == "привет", "missing п");
 Check(engine.Decide("пивет", options)?.Replacement == "привет", "missing р");
 Check(engine.Decide("првет", options)?.Replacement == "привет", "missing и");
 Check(engine.Decide("ивет", options)?.Replacement == "привет", "missing пр");
 Check(engine.Decide("вет", options)?.Replacement == "привет", "missing при");
-Check(engine.Decide("сейчасскаким", options)?.Replacement == "сейчас с каким",
+Check(engine.Decide("сетифика", certificateOptions)?.Replacement == "сертификат",
+    "two configured broken keys inside and at the end");
+Check(engine.Decide("потести", missingSpaceOptions)?.Reason != CorrectionReason.MissingSpace,
+    "unknown word is not split into по тест и");
+Check(engine.EarlyLayoutDecision("рели", options) is null,
+    "Russian prefix рели does not trigger an early layout switch");
+Check(engine.EarlyLayoutDecision("релиз", options) is null,
+    "Russian prefix релиз does not trigger an early layout switch");
+Check(engine.Decide("релизь", options) is null,
+    "unknown Russian word релизь stays unchanged by default");
+Check(engine.Decide("сетифика", new CorrectionOptions
+{
+    CorrectTypos = false,
+    CorrectMissingSpaces = true,
+    RestoreBrokenKeys = false
+})?.Reason != CorrectionReason.MissingSpace, "unknown word is not split into short syllables");
+Check(engine.Decide("сейчасскаким", missingSpaceOptions)?.Replacement == "сейчас с каким",
     "missing spaces");
 Check(KeyboardLayoutConverter.NeedsWordBoundary("xcode", "х"), "mixed script space");
 var phrase = engine.PlanTrailingLayoutCorrection("lf z ", SupportedLanguage.Russian, options);
