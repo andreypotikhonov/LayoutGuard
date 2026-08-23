@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "positive_exact_recovery": 0.9085086489013557,
+  "noncollision_positive_recovery": 0.9515252411496842,
+  "clean_preservation": 1.0,
+  "false_positive_rate": 0.0,
+  "collision_preservation": 1.0,
+  "name_recovery": 0.8734092431346283,
+  "buckets": {
+    "missing_1": 0.9126857749469215,
+    "missing_2": 0.876233552631579,
+    "missing_3": 0.9067796610169492
+  },
+  "latency_ms": {
+    "median": 0.0018,
+    "p95": 0.3657,
+    "p99": 0.5936,
+    "worst": 29.6831
+  },
+  "managed_engine_bytes": 120515592,
+  "memory_note": "Includes the full CorrectionEngine, Hunspell dictionaries, old fallback resources and V2 resources; not an isolated V2 allocation."
+}

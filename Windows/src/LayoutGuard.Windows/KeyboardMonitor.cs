@@ -1,4 +1,5 @@
 using LayoutGuard.Core;
+using System.Text.RegularExpressions;
 
 namespace LayoutGuard.Windows;
 
@@ -139,7 +140,7 @@ internal sealed class KeyboardMonitor : IDisposable
         var word = _currentWord;
         _currentWord = string.Empty;
         var options = _correctionOptions;
-        var decision = _engine.Decide(word, options);
+        var decision = _engine.Decide(word, options, BuildCorrectionContext(word));
         if (decision is null)
         {
             AppendToSentence(word + text);
@@ -178,6 +179,20 @@ internal sealed class KeyboardMonitor : IDisposable
         }
         _sentencePrefix += text;
         if (_sentencePrefix.Length > 512) _sentencePrefix = string.Empty;
+    }
+
+    internal CorrectionContext BuildCorrectionContext(string currentWord)
+    {
+        var tokens = Regex.Matches(_sentencePrefix, @"[\p{L}]+(?:[-'][\p{L}]+)*")
+            .Select(match => match.Value.ToLowerInvariant())
+            .Where(token => KeyboardLayoutConverter.DetectLanguage(token) == SupportedLanguage.Russian)
+            .TakeLast(2)
+            .ToArray();
+        return new CorrectionContext(
+            PreviousToken1: tokens.Length > 0 ? tokens[^1] : null,
+            PreviousToken2: tokens.Length > 1 ? tokens[^2] : null,
+            SentenceBoundary: string.IsNullOrWhiteSpace(_sentencePrefix),
+            OriginalWasCapitalized: currentWord.Length > 0 && char.IsUpper(currentWord[0]));
     }
 
     private void ResetContext()

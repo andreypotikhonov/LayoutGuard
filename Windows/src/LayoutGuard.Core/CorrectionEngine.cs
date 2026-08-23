@@ -6,6 +6,7 @@ namespace LayoutGuard.Core;
 
 public sealed class CorrectionEngine
 {
+    private const long MinimumCorpusPreservationCount = 2;
     private const long EarlyLayoutMinimumPopularity = 10_000;
     private const long EarlyLayoutPopularityRatio = 50;
     private readonly WordList _russian;
@@ -13,6 +14,9 @@ public sealed class CorrectionEngine
     private readonly FrequencyTable _russianFrequency;
     private readonly FrequencyTable _englishFrequency;
     private readonly BrokenKeyGapModel? _russianBrokenKeyModel;
+    private readonly PackedLanguageLexicon? _russianBrokenKeyLexicon;
+    private readonly BrokenKeyLanguageStatistics? _russianBrokenKeyStatistics;
+    private readonly BrokenKeyCandidateRanker _russianBrokenKeyRanker;
     private readonly Dictionary<string, Dictionary<string, (string Word, long Count)>> _brokenIndexes = [];
     private readonly object _indexLock = new();
 
@@ -28,12 +32,23 @@ public sealed class CorrectionEngine
         _russianBrokenKeyModel = BrokenKeyGapModel.Load(
             Path.Combine(resourceDirectory, "Models", "broken_key_gap_model.json"),
             Path.Combine(resourceDirectory, "Models", "broken_key_vocabulary.bloom"));
+        _russianBrokenKeyLexicon = PackedLanguageLexicon.Load(
+            Path.Combine(resourceDirectory, "Models", "ru_broken_lexicon.bin"));
+        _russianBrokenKeyStatistics = BrokenKeyLanguageStatistics.Load(
+            Path.Combine(resourceDirectory, "Models", "ru_language_stats.bin"));
+        _russianBrokenKeyRanker = BrokenKeyCandidateRanker.Load(
+            Path.Combine(resourceDirectory, "Models", "ru_ranker.json"));
     }
 
     public bool IsCorrect(string word, SupportedLanguage language, CorrectionOptions? options = null)
     {
         var normalized = word.ToLowerInvariant();
         if (options?.CustomWords.Contains(normalized) == true) return true;
+        if (language == SupportedLanguage.Russian && _russianBrokenKeyLexicon?.Contains(normalized) == true)
+            return true;
+        if (language == SupportedLanguage.Russian &&
+            (_russianBrokenKeyStatistics?.Unigram(normalized) ?? 0) >= MinimumCorpusPreservationCount)
+            return true;
         return Dictionary(language).Check(normalized);
     }
 
@@ -43,7 +58,13 @@ public sealed class CorrectionEngine
         _ = BrokenIndex(SupportedLanguage.English, options);
     }
 
-    public CorrectionDecision? Decide(string word, CorrectionOptions options)
+    public CorrectionDecision? Decide(string word, CorrectionOptions options) =>
+        Decide(word, options, null);
+
+    public CorrectionDecision? Decide(
+        string word,
+        CorrectionOptions options,
+        CorrectionContext? context)
     {
         if (string.IsNullOrWhiteSpace(word) || word.Length > 64) return null;
         var normalized = word.ToLowerInvariant();
@@ -74,7 +95,7 @@ public sealed class CorrectionEngine
 
         if (options.RestoreBrokenKeys)
         {
-            var restored = BestBrokenKeyCandidate(normalized, language.Value, options, originalCorrect);
+            var restored = BestBrokenKeyCandidate(normalized, language.Value, options, originalCorrect, context);
             if (restored is not null)
             {
                 return Decision(word, restored.Value.Word, language.Value,
@@ -263,7 +284,8 @@ public sealed class CorrectionEngine
         string input,
         SupportedLanguage language,
         CorrectionOptions options,
-        bool originalCorrect)
+        bool originalCorrect,
+        CorrectionContext? context)
     {
         if (input.Length < 2) return null;
         var broken = language == SupportedLanguage.Russian
@@ -277,16 +299,32 @@ public sealed class CorrectionEngine
         if (originalCorrect) return null;
 
         var frequency = Frequency(language);
-        if (language == SupportedLanguage.Russian &&
-            _russianBrokenKeyModel?.Supports(broken) == true)
+        if (language == SupportedLanguage.Russian && _russianBrokenKeyLexicon is not null)
         {
-            var prediction = _russianBrokenKeyModel.Predict(
+            var candidates = _russianBrokenKeyLexicon.Generate(input, broken, options.MaximumMissingLetters).ToList();
+            foreach (var custom in options.CustomWords)
+            {
+                var normalizedCustom = custom.ToLowerInvariant();
+                var missing = MissingBrokenCharacters(normalizedCustom, input, broken);
+                if (missing is > 0 && missing <= options.MaximumMissingLetters)
+                    candidates.Add(new BrokenKeyCandidate(normalizedCustom, missing, LexiconWordClass.Custom));
+            }
+            if (candidates.Count == 0) return null;
+
+            var gapPrediction = _russianBrokenKeyModel?.Supports(broken) == true
+                ? _russianBrokenKeyModel.Predict(
                 input,
                 broken,
                 options.MaximumMissingLetters,
                 candidate => IsCorrect(candidate, language, options),
-                frequency.Get);
-            if (prediction is not null) return prediction;
+                candidate => Math.Max(frequency.Get(candidate), _russianBrokenKeyStatistics?.Unigram(candidate) ?? 0))
+                : null;
+            return _russianBrokenKeyRanker.Choose(
+                candidates,
+                candidate => Math.Max(frequency.Get(candidate), _russianBrokenKeyStatistics?.Unigram(candidate) ?? 0),
+                _russianBrokenKeyStatistics,
+                context,
+                gapPrediction?.Word);
         }
 
         var originalFrequency = frequency.Get(input);
@@ -304,6 +342,28 @@ public sealed class CorrectionEngine
         var best = valid[0];
         var score = Math.Log10(best.Count + 1) * 20 + 50;
         return (best.Word, score);
+    }
+
+    private static int MissingBrokenCharacters(string candidate, string observed, ISet<char> broken)
+    {
+        var observedIndex = 0;
+        var missing = 0;
+        foreach (var character in candidate)
+        {
+            if (observedIndex < observed.Length && character == observed[observedIndex])
+            {
+                observedIndex++;
+            }
+            else if (broken.Contains(character))
+            {
+                missing++;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        return observedIndex == observed.Length ? missing : -1;
     }
 
     private (string Word, double Score)? BestTypoCandidate(

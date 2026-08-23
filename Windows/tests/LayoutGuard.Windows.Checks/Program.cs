@@ -53,6 +53,26 @@ var averageModelMilliseconds = modelWatch.Elapsed.TotalMilliseconds / 2_000;
 Check(averageModelMilliseconds < 2,
     $"trained word model stays below 2 ms/word average (actual: {averageModelMilliseconds:F4} ms)");
 
+var benchmarkWords = new[]
+{
+    "ривет", "пивет", "кзамен", "лектрон", "погамма", "огамма", "погамме",
+    "погаммами", "погаммного", "дмитий", "дмитию", "евое", "потести", "релизь"
+};
+foreach (var word in benchmarkWords) _ = engine.Decide(word, options);
+var candidateLatencies = new double[5_000];
+for (var index = 0; index < candidateLatencies.Length; index++)
+{
+    var started = Stopwatch.GetTimestamp();
+    _ = engine.Decide(benchmarkWords[index % benchmarkWords.Length], options);
+    candidateLatencies[index] = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+}
+Array.Sort(candidateLatencies);
+var p50 = candidateLatencies[(int)(candidateLatencies.Length * 0.50)];
+var p95 = candidateLatencies[(int)(candidateLatencies.Length * 0.95)];
+var p99 = candidateLatencies[(int)(candidateLatencies.Length * 0.99)];
+Check(p50 < 0.5 && p95 < 1 && p99 < 3,
+    $"V2 latency targets median/p95/p99 (actual: {p50:F4}/{p95:F4}/{p99:F4} ms)");
+
 var typoDecision = engine.Decide("превет", new CorrectionOptions { CorrectTypos = true });
 Check(typoDecision?.Replacement == "привет", "engine corrects an ordinary typo превет → привет");
 
@@ -152,6 +172,14 @@ using (var input = new TextBox { Dock = DockStyle.Fill, Multiline = true })
     FeedMonitor(monitor, input, "потести ");
     Check(input.Text == "потести ",
         $"KeyboardMonitor did not split потести into syllables (actual: '{input.Text}')");
+
+    ResetMonitor(monitor, input);
+    FeedMonitor(monitor, input, "в ");
+    Check(monitor.BuildCorrectionContext("евое").PreviousToken1 == "в",
+        "KeyboardMonitor extracted previous Russian token");
+    FeedMonitor(monitor, input, "евое ");
+    Check(input.Text == "в европе ",
+        $"KeyboardMonitor used previous-token context for в Европе (actual: '{input.Text}')");
 
     ResetMonitor(monitor, input);
     InputLanguageSwitcher.Select(SupportedLanguage.Russian);
@@ -281,7 +309,7 @@ void FeedMonitor(KeyboardMonitor monitor, TextBox target, string text)
 
 void ResetMonitor(KeyboardMonitor monitor, TextBox target)
 {
-    FeedMonitor(monitor, target, ".");
+    _ = monitor.HandleKey(new KeyStroke(0x25, 0, "", false)); // Left arrow resets pending context.
     target.Clear();
     Application.DoEvents();
 }

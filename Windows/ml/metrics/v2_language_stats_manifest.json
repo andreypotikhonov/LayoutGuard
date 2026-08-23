@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "sentences": 109508,
+  "tokens": 1538773,
+  "unique_unigrams": 158696,
+  "unique_bigrams_observed": 884401,
+  "unique_trigrams_observed": 1184094,
+  "exported_bigrams": 200000,
+  "exported_trigrams": 200000,
+  "intermediate_sha256": "be11a402278b0b3d65f0d48de6daa1330756094954f9777ae5a775e6e94f602f"
+}

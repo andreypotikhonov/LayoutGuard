@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "seed": 20260823,
+  "letters": "прэ",
+  "maximum_missing": 3,
+  "split_key": "sha256(lemma_id) modulo 100",
+  "split": { "train": 80, "validation": 10, "test": 10 },
+  "sample_modulo": 10,
+  "counts": {
+    "train_clean": 268408,
+    "train_positive": 169815,
+    "validation_clean": 33430,
+    "validation_positive": 21010,
+    "test_clean": 33971,
+    "test_positive": 21390,
+    "missing_1": 187813,
+    "missing_2": 23241,
+    "missing_3": 1161,
+    "name_positive": 16013,
+    "real_word_collision": 9046,
+    "multi_candidate": 10127,
+    "non_word": 193042
+  },
+  "dataset_sha256": "6ed152f650b5cc8ddb7628f9a4d04c2f641ca13e0ea8205fec5a6c367c4dfb56",
+  "runtime_lexicon_sha256": "2f5afe4faed67aba5cda40ffa108b3b654ae92ebbf9dca2c044e8a6e8bb019a6"
+}

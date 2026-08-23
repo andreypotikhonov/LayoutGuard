@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "4253ed12ce8c14d9e5c9fdac3bee4df5ac5a0db7",
+  "comparison": {
+    "v1_positive_exact_recovery": 0.8273856152261584,
+    "v2_python_positive_exact_recovery": 0.9068256194483404,
+    "v2_runtime_positive_exact_recovery": 0.9085086489013557,
+    "v2_runtime_noncollision_recovery": 0.9515252411496842,
+    "v2_common_1_2_noncollision_recovery": 0.9877551020408163,
+    "v2_real_word_collision_preservation": 1.0,
+    "v2_corpus_clean_token_preservation": 0.9999168168404307,
+    "v2_runtime_p95_ms": 0.3657,
+    "v2_runtime_p99_ms": 0.5936
+  },
+  "decision": "Safety-first V2 exact deletion-channel generator plus compact frequency/context ranker. Existing valid words are preserved, so ambiguous real-word collisions reduce all-positive recall by design."
+}

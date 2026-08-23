@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "forms": 3354820,
+  "lemmas": 511185,
+  "classes": {
+    "STANDARD": 3017077,
+    "NAME": 337051,
+    "ABBREVIATION": 665,
+    "COLLOQUIAL": 3,
+    "SLANG": 14,
+    "TECH": 10
+  },
+  "source_memberships": {
+    "OpenCorpora": 3022325,
+    "Hunspell-head": 552357,
+    "FrequencyWords": 48770,
+    "manual": 38
+  },
+  "contains_andrey_forms": {
+    "андрей": true,
+    "андрея": true,
+    "андрею": true,
+    "андреем": true,
+    "андрее": true
+  },
+  "intermediate_sha256": "533693b4ae83703933a34b26da0f008b772505a73aadcb5a87dbe7b00a1b99a7"
+}

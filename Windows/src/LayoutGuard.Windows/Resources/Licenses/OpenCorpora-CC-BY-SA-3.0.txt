@@ -1,0 +1,16 @@
+OpenCorpora Russian morphological dictionary and annotated corpus
+
+Project: https://opencorpora.org/
+License: Creative Commons Attribution-ShareAlike 3.0 Unported
+License URL: https://creativecommons.org/licenses/by-sa/3.0/
+
+The LayoutGuard Windows V2 runtime lexicon and n-gram statistics are generated
+from OpenCorpora data. The build used OpenCorpora dictionary format 0.92,
+revision 417150 (via the pymorphy3-dicts-ru compiled distribution), and an
+OpenCorpora 2025 annotated-corpus snapshot, revision 4580225.
+
+Attribution: OpenCorpora contributors.
+
+The original XML corpora and build-only Python packages are not included in the
+LayoutGuard installer. Only compact derived lookup resources required for
+offline correction are shipped.

@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "candidate_recall": 1.0,
+  "top3_candidate_recall": 0.9981299672744273,
+  "positive_exact_recovery": 0.9068256194483404,
+  "noncollision_positive_recovery": 0.9497625226460363,
+  "frequency_weighted_recovery": 0.8999428409554918,
+  "clean_preservation": 1.0,
+  "false_positive_rate": 0.0,
+  "corpus_clean_type_preservation": 0.9991934264253668,
+  "corpus_clean_token_preservation": 0.9999168168404307,
+  "corpus_false_positives_per_million_tokens": 83.1831595693,
+  "slang_preservation": 1.0,
+  "real_word_collision_preservation": 1.0,
+  "name_recovery": 0.870060281312793,
+  "buckets": {
+    "common_1_2_all": { "rows": 288, "accuracy": 0.8402777777777778 },
+    "common_1_2_noncollision": { "rows": 245, "accuracy": 0.9877551020408163 },
+    "missing_1": { "rows": 18840, "accuracy": 0.9107218683651804 },
+    "missing_2": { "rows": 2432, "accuracy": 0.8766447368421053 },
+    "missing_3": { "rows": 118, "accuracy": 0.9067796610169492 }
+  },
+  "python_candidate_latency_ms": {
+    "median": 0.2554,
+    "p95": 0.4368,
+    "p99": 0.5816,
+    "worst": 16.9136
+  },
+  "dataset_sha256": "6ed152f650b5cc8ddb7628f9a4d04c2f641ca13e0ea8205fec5a6c367c4dfb56"
+}

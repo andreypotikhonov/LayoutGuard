@@ -26,6 +26,13 @@ public sealed record PhraseCorrection(
     string Original,
     string Replacement);
 
+public sealed record CorrectionContext(
+    string? PreviousToken1 = null,
+    string? PreviousToken2 = null,
+    string? NextToken = null,
+    bool SentenceBoundary = false,
+    bool OriginalWasCapitalized = false);
+
 public sealed class CorrectionOptions
 {
     public bool CorrectTypos { get; init; } = false;

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-23",
+  "runtime_network_access": false,
+  "sources": [
+    {
+      "name": "OpenCorpora morphological dictionary",
+      "version": "pymorphy3-dicts-ru 2.4.417150.4580142",
+      "url": "https://github.com/no-plagiarism/pymorphy3-dicts",
+      "license": "CC BY-SA 3.0",
+      "build_input_sha256": "ae4381a9d6e4e636309ac1a242e480a9470a05723f6673d5fcc3fcf293aa8a9e"
+    },
+    {
+      "name": "OpenCorpora annotated corpus",
+      "version": "2025 release",
+      "url": "https://github.com/MAWOH/ru-open-corpora",
+      "license": "CC BY-SA 3.0",
+      "archive_sha256": "171a8413b9d02e8eeed99a89958b6ebdb9ca0b91ba1f120085a3663cf8f2c484",
+      "xml_sha256": "cadc8070cedbad34721a2c6dcbfaaf8b1dbb7daa105da8454319d42deb42a788"
+    },
+    {
+      "name": "LibreOffice Russian Hunspell",
+      "repository_path": "Windows/src/LayoutGuard.Windows/Resources/Dictionaries/ru_RU.dic",
+      "license": "MPL-2.0",
+      "sha256": "b565654f9942fea6c5a7ac0f748e2fb0e33b49eff5f951720d5f7b0350d65b77"
+    },
+    {
+      "name": "FrequencyWords Russian 50k",
+      "repository_path": "Windows/src/LayoutGuard.Windows/Resources/Frequencies/ru_50k.txt",
+      "license": "CC BY-SA 4.0",
+      "sha256": "846d567f9131e1e8ed190041867ba7ff5d19d8f1e7e0d4e77dadfe7531035569"
+    },
+    {
+      "name": "LayoutGuard conservative supplemental vocabulary",
+      "repository_path": "Windows/ml/data/ru_supplemental.tsv",
+      "license": "project license",
+      "sha256": "509d269c1cc154efed35b098dee6a9d1f89469444c3ac85185d43de0142194f6"
+    }
+  ]
+}

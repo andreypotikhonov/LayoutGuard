@@ -1,0 +1,67 @@
+category	observed	expected	note
+BASIC	ривет	привет	missing п
+BASIC	пивет	привет	missing р
+BASIC	кзамен	экзамен	missing э
+BASIC	лектрон	электрон	missing э
+BASIC	погамма	программа	two missing р
+BASIC	огамма	программа	missing п and two р
+MORPHOLOGY	погаммы	программы	noun genitive
+MORPHOLOGY	погамме	программе	noun dative
+MORPHOLOGY	погамму	программу	noun accusative
+MORPHOLOGY	погаммой	программой	noun instrumental
+MORPHOLOGY	погаммами	программами	plural instrumental
+MORPHOLOGY	погаммах	программах	plural locative
+MORPHOLOGY	погаммный	программный	adjective
+MORPHOLOGY	погаммная	программная	adjective feminine
+MORPHOLOGY	погаммного	программного	adjective genitive
+MORPHOLOGY	погаммному	программному	adjective dative
+MORPHOLOGY	погаммными	программными	adjective instrumental
+MORPHOLOGY	погаммиовать	программировать	verb
+MORPHOLOGY	погаммиую	программирую	verb present
+MORPHOLOGY	погаммиовал	программировал	verb past
+MORPHOLOGY	погаммиовали	программировали	verb plural past
+MORPHOLOGY	погаммиование	программирование	verbal noun
+MORPHOLOGY	погаммист	программист	noun
+MORPHOLOGY	погаммиста	программиста	noun genitive
+MORPHOLOGY	погаммистами	программистами	plural instrumental
+NAME	дмитий	дмитрий	name with missing р
+NAME	дмитию	дмитрию	name dative
+NAME	дмитием	дмитрием	name instrumental
+NAME	андрей	андрей	valid name
+NAME	андрея	андрея	valid name genitive
+NAME	андрею	андрею	valid name dative
+NAME	андреем	андреем	valid name instrumental
+NAME	андрее	андрее	valid name locative
+COLLISION	андей	андей	real-word collision with Андрей must be preserved
+PRESERVE	норм	норм	common colloquial
+PRESERVE	кран	кран	valid common word
+PRESERVE	кринж	кринж	slang
+PRESERVE	пруф	пруф	slang
+PRESERVE	репост	репост	technical slang
+PRESERVE	перс	перс	slang
+PRESERVE	ок	ок	colloquial
+PRESERVE	окей	окей	colloquial
+PRESERVE	чел	чел	slang
+PRESERVE	бро	бро	slang
+PRESERVE	рофл	рофл	slang
+PRESERVE	лол	лол	slang
+PRESERVE	имба	имба	slang
+PRESERVE	видос	видос	slang
+PRESERVE	мем	мем	technical slang
+PRESERVE	топ	топ	colloquial
+PRESERVE	топчик	топчик	slang
+REGRESSION	потести	потести	do not split into syllables
+REGRESSION	релизь	релизь	do not invent letters
+REGRESSION	сетифика	сетифика	default broken keys do not match
+REGRESSION	превет	превет	ordinary typo is separate
+TECHNICAL	github	github	Latin token
+TECHNICAL	xcode	xcode	Latin token
+TECHNICAL	docker	docker	Latin token
+TECHNICAL	python	python	Latin token
+TECHNICAL	swift	swift	Latin token
+TECHNICAL	windows	windows	Latin token
+TECHNICAL	linux	linux	Latin token
+TECHNICAL	chatgpt	chatgpt	Latin token
+TECHNICAL	api	api	Latin token
+TECHNICAL	json	json	Latin token
+TECHNICAL	regex	regex	Latin token

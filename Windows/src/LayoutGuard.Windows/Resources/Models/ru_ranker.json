@@ -1,0 +1,1 @@
+{"schema_version":1,"unigram_weight":1.0,"bigram_weight":1.25,"trigram_weight":1.75,"missing_letter_penalty":1.2,"gap_model_match_bonus":1.5,"class_bias":{"STANDARD":0.4,"NAME":0.2,"COLLOQUIAL":0.1,"TECH":0.1,"CUSTOM":1.0},"minimum_score":0.0,"minimum_margin":0.35,"unique_candidate_minimum_length":4,"real_word_policy":"preserve_without_exception"}

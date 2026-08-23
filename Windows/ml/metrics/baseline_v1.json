@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-23",
+  "commit": "4253ed12ce8c14d9e5c9fdac3bee4df5ac5a0db7",
+  "implementation": "character gap model + Bloom vocabulary + single best frequency fallback",
+  "dataset": {
+    "vocabulary_words": 582956,
+    "train_rows": 1018299,
+    "validation_rows": 127657,
+    "test_rows": 127515
+  },
+  "test": {
+    "positive_exact_recovery": 0.8273856152261584,
+    "clean_preservation": 1.0,
+    "false_positive_rate": 0.0,
+    "overall_accuracy": 0.906685487981806,
+    "log_frequency_weighted_accuracy": 0.9141389592638257
+  },
+  "runtime": {
+    "average_word_latency_ms": 0.2378,
+    "average_keyboard_handler_ms": 0.0017,
+    "model_bytes": 190704,
+    "vocabulary_bytes": 2097168,
+    "installed_process_working_set_bytes": 89128960,
+    "installed_process_private_bytes": 164610048,
+    "memory_note": "Process figures include the tray UI, Hunspell dictionaries and a long-running installed 0.2.3 process; they are recorded as an observational baseline, not an isolated model allocation."
+  },
+  "verification": {
+    "core_checks": "passed",
+    "windows_checks": "passed",
+    "release_build_warnings": 0,
+    "release_build_errors": 0
+  }
+}
