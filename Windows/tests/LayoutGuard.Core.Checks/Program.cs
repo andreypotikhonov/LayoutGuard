@@ -49,8 +49,9 @@ Check(engine.Decide("неограненный", options) is null, "valid rare wo
 Check(engine.Decide("првиет", typoOptions)?.Replacement == "привет", "transposition");
 Check(engine.Decide("ривет", options)?.Replacement == "привет", "missing п");
 Check(engine.Decide("пивет", options)?.Replacement == "привет", "missing р");
+Check(engine.Decide("ивет", options)?.Replacement == "привет", "missing п and р in привет");
+Check(engine.Decide("Ивет", options)?.Replacement == "Привет", "capitalization after missing п and р");
 Check(engine.Decide("првет", options) is null, "unconfigured missing и is not invented");
-Check(engine.Decide("ивет", options) is null, "valid dictionary word is never rewritten");
 Check(engine.Decide("кзамен", options)?.Replacement == "экзамен", "missing э at the start");
 Check(engine.Decide("лектрон", options)?.Replacement == "электрон", "second missing э at the start");
 Check(engine.Decide("погамма", options)?.Replacement == "программа", "two missing р in программа");
@@ -70,9 +71,10 @@ Check(engine.Decide("евое", options, new CorrectionContext(PreviousToken1: "
     "bigram context resolves в Европе");
 var customOptions = new CorrectionOptions
 {
-    CustomWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "прэюксе", "моёкастом" }
+    CustomWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "прэюксе", "моёкастом", "ивет" }
 };
 Check(engine.Decide("моёкастом", customOptions) is null, "custom observed word has absolute preservation priority");
+Check(engine.Decide("ивет", customOptions) is null, "custom word disables the strict collision override");
 Check(engine.Decide("юксе", customOptions)?.Replacement == "прэюксе",
     "custom word can be an exact broken-key candidate");
 Check(engine.Decide("кран", options) is null, "valid кран is not guessed as экран");

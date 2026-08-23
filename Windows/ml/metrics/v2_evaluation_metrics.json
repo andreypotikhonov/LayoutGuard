@@ -21,10 +21,10 @@
     "missing_3": { "rows": 118, "accuracy": 0.9067796610169492 }
   },
   "python_candidate_latency_ms": {
-    "median": 0.2554,
-    "p95": 0.4368,
-    "p99": 0.5816,
-    "worst": 16.9136
+    "median": 0.2631,
+    "p95": 0.4417,
+    "p99": 0.5862,
+    "worst": 1.0527
   },
   "dataset_sha256": "6ed152f650b5cc8ddb7628f9a4d04c2f641ca13e0ea8205fec5a6c367c4dfb56"
 }

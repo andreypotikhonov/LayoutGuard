@@ -17,6 +17,7 @@ from v2_common import CLASS_IDS, PackedDafsa, read_lexicon, sha256_file
 
 
 CLASS_BIAS = {1: 0.4, 2: 0.2, 3: 0.1, 4: 0.1, 5: 1.0}
+MINIMUM_DOMINANT_COLLISION_FREQUENCY = 10_000
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,6 +70,20 @@ def choose(candidates, frequencies):
     return best.word if score >= 0.0 and score - second_score >= 0.35 else None
 
 
+def dominant_collision_override(observed, candidates, frequencies):
+    """Mirror the runtime's narrow zero-frequency Hunspell-artifact rule."""
+    if frequencies.get(observed, 0) != 0 or len(candidates) != 1:
+        return None
+    candidate = candidates[0]
+    if (
+        candidate.missing_count < 2
+        or len(candidate.word) < 5
+        or frequencies.get(candidate.word, 0) < MINIMUM_DOMINANT_COLLISION_FREQUENCY
+    ):
+        return None
+    return candidate.word
+
+
 def ratio(numerator: int, denominator: int) -> float:
     return numerator / max(1, denominator)
 
@@ -93,9 +108,11 @@ def main() -> None:
             missing = int(row["missing_count"])
             if missing == 0:
                 counters["clean_total"] += 1
-                # Runtime's exact V2 safety rule checks the lexicon before any
-                # candidate ranking, so every known clean form is preserved.
-                counters["clean_correct"] += lexicon.contains(observed)
+                preserved = lexicon.contains(observed)
+                if preserved and frequencies.get(observed, 0) == 0:
+                    candidates = lexicon.generate(observed, broken, args.maximum_missing)
+                    preserved = dominant_collision_override(observed, candidates, frequencies) is None
+                counters["clean_correct"] += preserved
                 if row["expected_class"] in {"SLANG", "COLLOQUIAL"}:
                     counters["slang_total"] += 1
                     counters["slang_correct"] += lexicon.contains(observed)
@@ -109,7 +126,11 @@ def main() -> None:
             counters["candidate_recalled"] += contains_expected
             counters["top3_recalled"] += expected in [candidate.word for candidate in candidates[:3]]
             observed_valid = row["observed_is_valid"] == "1"
-            prediction = observed if observed_valid else (choose(candidates, frequencies) or observed)
+            prediction = (
+                dominant_collision_override(observed, candidates, frequencies) or observed
+                if observed_valid
+                else choose(candidates, frequencies) or observed
+            )
             correct = prediction == expected
             counters["positive_correct"] += correct
             if row["collision_class"] != "REAL_WORD_COLLISION":
@@ -157,7 +178,10 @@ def main() -> None:
     for word, count in corpus_unigrams.items():
         counters["corpus_clean_types"] += 1
         counters["corpus_clean_tokens"] += count
-        preserved = lexicon.contains(word) or count >= 2
+        preserved = count >= 2
+        if not preserved and lexicon.contains(word):
+            candidates = lexicon.generate(word, broken, args.maximum_missing)
+            preserved = dominant_collision_override(word, candidates, frequencies) is None
         if not preserved:
             candidates = lexicon.generate(word, broken, args.maximum_missing)
             preserved = choose(candidates, frequencies) is None

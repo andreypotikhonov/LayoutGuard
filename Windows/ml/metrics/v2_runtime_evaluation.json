@@ -12,11 +12,11 @@
     "missing_3": 0.9067796610169492
   },
   "latency_ms": {
-    "median": 0.0018,
-    "p95": 0.3657,
-    "p99": 0.5936,
-    "worst": 29.6831
+    "median": 0.0181,
+    "p95": 0.3568,
+    "p99": 0.5987,
+    "worst": 24.7328
   },
-  "managed_engine_bytes": 120515592,
+  "managed_engine_bytes": 120517320,
   "memory_note": "Includes the full CorrectionEngine, Hunspell dictionaries, old fallback resources and V2 resources; not an isolated V2 allocation."
 }

@@ -7,6 +7,7 @@ namespace LayoutGuard.Core;
 public sealed class CorrectionEngine
 {
     private const long MinimumCorpusPreservationCount = 2;
+    private const long MinimumDominantCollisionCandidateFrequency = 10_000;
     private const long EarlyLayoutMinimumPopularity = 10_000;
     private const long EarlyLayoutPopularityRatio = 50;
     private readonly WordList _russian;
@@ -293,11 +294,6 @@ public sealed class CorrectionEngine
             : options.BrokenEnglishLetters;
         if (broken.Count == 0) return null;
 
-        // Word-only evidence cannot safely distinguish a valid word from a
-        // different word that lost a broken key (for example, "то"/"это").
-        // Never rewrite an existing dictionary or custom word automatically.
-        if (originalCorrect) return null;
-
         var frequency = Frequency(language);
         if (language == SupportedLanguage.Russian && _russianBrokenKeyLexicon is not null)
         {
@@ -310,6 +306,33 @@ public sealed class CorrectionEngine
                     candidates.Add(new BrokenKeyCandidate(normalizedCustom, missing, LexiconWordClass.Custom));
             }
             if (candidates.Count == 0) return null;
+
+            if (originalCorrect)
+            {
+                // Hunspell contains a few zero-frequency artefacts that are
+                // indistinguishable from words typed with several dead keys.
+                // Permit only the narrow, measurable case where there is one
+                // exact candidate, at least two configured letters are absent,
+                // the observed form has no corpus/frequency evidence, and the
+                // candidate is very common. Custom words always win.
+                if (options.CustomWords.Contains(input) || candidates.Count != 1)
+                    return null;
+                var candidate = candidates[0];
+                var observedPopularity = Math.Max(
+                    frequency.Get(input),
+                    _russianBrokenKeyStatistics?.Unigram(input) ?? 0);
+                var candidatePopularity = Math.Max(
+                    frequency.Get(candidate.Word),
+                    _russianBrokenKeyStatistics?.Unigram(candidate.Word) ?? 0);
+                if (observedPopularity != 0 ||
+                    candidate.MissingCount < 2 ||
+                    candidate.Word.Length < 5 ||
+                    candidatePopularity < MinimumDominantCollisionCandidateFrequency)
+                {
+                    return null;
+                }
+                return (candidate.Word, Math.Log(1 + candidatePopularity));
+            }
 
             var gapPrediction = _russianBrokenKeyModel?.Supports(broken) == true
                 ? _russianBrokenKeyModel.Predict(
@@ -326,6 +349,12 @@ public sealed class CorrectionEngine
                 context,
                 gapPrediction?.Word);
         }
+
+        // Word-only evidence cannot safely distinguish an ordinary valid word
+        // from a different word that lost one broken key (for example,
+        // "то"/"это"). The narrow Russian V2 exception above is the only
+        // collision override.
+        if (originalCorrect) return null;
 
         var originalFrequency = frequency.Get(input);
         var index = BrokenIndex(language, options);

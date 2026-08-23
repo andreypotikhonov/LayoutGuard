@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "rule": {
+    "observed_frequency": 0,
+    "exact_candidate_count": 1,
+    "minimum_missing_broken_letters": 2,
+    "minimum_candidate_length": 5,
+    "minimum_candidate_frequency": 10000,
+    "custom_word_priority": "absolute"
+  },
+  "configured_letters": "прэ",
+  "full_lexicon_triggers": [
+    { "observed": "авильно", "replacement": "правильно", "missing": 2, "candidate_frequency": 26109 },
+    { "observed": "ивет", "replacement": "привет", "missing": 2, "candidate_frequency": 134659 },
+    { "observed": "идется", "replacement": "придется", "missing": 2, "candidate_frequency": 23170 },
+    { "observed": "идётся", "replacement": "придётся", "missing": 2, "candidate_frequency": 11527 },
+    { "observed": "ишли", "replacement": "пришли", "missing": 2, "candidate_frequency": 17395 },
+    { "observed": "нариме", "replacement": "например", "missing": 3, "candidate_frequency": 14091 }
+  ],
+  "held_out_clean_triggers": 0,
+  "held_out_clean_rows": 33971
+}

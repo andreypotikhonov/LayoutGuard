@@ -1,6 +1,12 @@
 category	observed	expected	note
 BASIC	ривет	привет	missing п
 BASIC	пивет	привет	missing р
+BASIC	ивет	привет	missing п and р; Hunspell zero-frequency collision
+BASIC	авильно	правильно	missing п and р; zero-frequency collision
+BASIC	идется	придется	missing п and р; zero-frequency collision
+BASIC	идётся	придётся	missing п and р; zero-frequency collision
+BASIC	ишли	пришли	missing п and р; zero-frequency collision
+BASIC	нариме	например	missing п, р, and р; zero-frequency collision
 BASIC	кзамен	экзамен	missing э
 BASIC	лектрон	электрон	missing э
 BASIC	погамма	программа	two missing р

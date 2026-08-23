@@ -9,8 +9,8 @@
     "v2_common_1_2_noncollision_recovery": 0.9877551020408163,
     "v2_real_word_collision_preservation": 1.0,
     "v2_corpus_clean_token_preservation": 0.9999168168404307,
-    "v2_runtime_p95_ms": 0.3657,
-    "v2_runtime_p99_ms": 0.5936
+    "v2_runtime_p95_ms": 0.3568,
+    "v2_runtime_p99_ms": 0.5987
   },
   "decision": "Safety-first V2 exact deletion-channel generator plus compact frequency/context ranker. Existing valid words are preserved, so ambiguous real-word collisions reduce all-positive recall by design."
 }

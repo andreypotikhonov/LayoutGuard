@@ -38,7 +38,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Настройки неисправных клавиш…", null, (_, _) => ShowSettings());
         menu.Items.Add("О программе", null, (_, _) => MessageBox.Show(
-            "LayoutGuard для Windows 0.2.4\n\nЛокальное исправление раскладки, опечаток и пропусков неисправных клавиш.\nНабираемый текст не отправляется в сеть.",
+            "LayoutGuard для Windows 0.2.5\n\nЛокальное исправление раскладки, опечаток и пропусков неисправных клавиш.\nНабираемый текст не отправляется в сеть.",
             "LayoutGuard", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Выход", null, (_, _) => ExitThread());

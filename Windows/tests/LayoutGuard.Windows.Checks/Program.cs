@@ -29,6 +29,14 @@ Check(
         Reason: CorrectionReason.MissingBrokenKey
     },
     "engine classifies ривет → привет as broken-key restoration");
+var twoMissingLettersDecision = engine.Decide("ивет", options);
+Check(
+    twoMissingLettersDecision is
+    {
+        Replacement: "привет",
+        Reason: CorrectionReason.MissingBrokenKey
+    },
+    "engine classifies ивет → привет with missing п and р");
 
 Check(engine.Decide("кзамен", options)?.Replacement == "экзамен",
     "trained model restores missing Russian э");
@@ -55,7 +63,7 @@ Check(averageModelMilliseconds < 2,
 
 var benchmarkWords = new[]
 {
-    "ривет", "пивет", "кзамен", "лектрон", "погамма", "огамма", "погамме",
+    "ривет", "пивет", "ивет", "кзамен", "лектрон", "погамма", "огамма", "погамме",
     "погаммами", "погаммного", "дмитий", "дмитию", "евое", "потести", "релизь"
 };
 foreach (var word in benchmarkWords) _ = engine.Decide(word, options);
@@ -136,6 +144,19 @@ using (var input = new TextBox { Dock = DockStyle.Fill, Multiline = true })
     Check(missingLetterInjected, "boundary correction batch for ривет was accepted");
     Check(input.Text == "привет ", $"typing ривет plus Space produced привет plus Space (actual: '{input.Text}')");
 
+    input.Text = "ивет";
+    input.SelectionStart = input.TextLength;
+    input.Focus();
+    Application.DoEvents();
+    var twoMissingLettersInjected = twoMissingLettersDecision is not null &&
+        TextInjector.ReplacePreviousText(
+            twoMissingLettersDecision.Original.Length,
+            twoMissingLettersDecision.Replacement + " ");
+    PumpUntil(() => input.Text == "привет ");
+
+    Check(twoMissingLettersInjected, "boundary correction batch for ивет was accepted");
+    Check(input.Text == "привет ", $"typing ивет plus Space produced привет plus Space (actual: '{input.Text}')");
+
     input.Text = "превет";
     input.SelectionStart = input.TextLength;
     input.Focus();
@@ -153,6 +174,11 @@ using (var input = new TextBox { Dock = DockStyle.Fill, Multiline = true })
     FeedMonitor(monitor, input, "ривет ");
     Check(input.Text == "привет ",
         $"KeyboardMonitor corrected ривет at the word boundary (actual: '{input.Text}')");
+
+    ResetMonitor(monitor, input);
+    FeedMonitor(monitor, input, "ивет ");
+    Check(input.Text == "привет ",
+        $"KeyboardMonitor corrected ивет with two missing keys (actual: '{input.Text}')");
 
     input.Clear();
     InputLanguageSwitcher.Select(SupportedLanguage.English);
