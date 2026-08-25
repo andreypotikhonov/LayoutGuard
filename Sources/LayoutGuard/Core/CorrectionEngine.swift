@@ -44,7 +44,8 @@ final class CorrectionEngine {
             )
 
             if !originalIsCorrectlySpelled,
-               let converted = LayoutConverter.convert(word, to: targetLanguage) {
+               let converted = LayoutConverter.convert(word, to: targetLanguage),
+               LayoutConverter.isLexicalWord(converted, language: targetLanguage) {
                 if correctTypos,
                    word.count >= 7,
                    let correctedConverted = typoCorrector.correction(

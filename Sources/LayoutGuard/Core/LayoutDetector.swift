@@ -19,7 +19,10 @@ struct LayoutDetector {
         }
 
         let targetLanguage: SupportedLanguage = currentLanguage == .english ? .russian : .english
-        guard let replacement = LayoutConverter.convert(word, to: targetLanguage) else { return nil }
+        guard let replacement = LayoutConverter.convert(word, to: targetLanguage),
+              LayoutConverter.isLexicalWord(replacement, language: targetLanguage) else {
+            return nil
+        }
 
         let originalScore = scorer.score(word, as: currentLanguage)
         let replacementScore = scorer.score(replacement, as: targetLanguage)

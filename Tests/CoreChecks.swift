@@ -6,6 +6,13 @@ enum CoreChecks {
         check(LayoutConverter.convert("ghbdtn", to: .russian) == "привет", "ghbdtn → привет")
         check(LayoutConverter.convert("руддщ", to: .english) == "hello", "руддщ → hello")
         check(LayoutConverter.convert("[jnz", to: .russian) == "хотя", "[jnz → хотя")
+        check(LayoutConverter.language(of: "x") == .english, "recognize Latin x")
+        check(LayoutConverter.language(of: "х") == .russian, "recognize Cyrillic х")
+        check(LayoutConverter.language(of: "[") == nil, "do not treat [ as a Latin letter")
+        check(LayoutConverter.language(of: "]") == nil, "do not treat ] as a Latin letter")
+        check(LayoutConverter.language(of: "_") == nil, "do not treat _ as a Latin letter")
+        check(!LayoutConverter.isLexicalWord("[l", language: .english), "reject bracket layout output")
+        check(LayoutConverter.isLexicalWord("hello", language: .english), "accept an English word")
         check(
             LayoutConverter.convert("lf z levf", to: .russian) == "да я дума",
             "convert the whole sentence prefix"

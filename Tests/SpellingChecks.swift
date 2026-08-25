@@ -5,6 +5,9 @@ enum SpellingChecks {
     static func main() {
         let engine = CorrectionEngine()
 
+        check(engine.decision(for: "х", correctTypos: true) == nil, "keep a standalone Cyrillic х")
+        check(engine.decision(for: "хд", correctTypos: true) == nil, "keep short text beginning with х")
+        check(engine.decision(for: "хаха", correctTypos: true) == nil, "never turn х into a bracket")
         check(engine.decision(for: "чето", correctTypos: true) == nil, "keep colloquial чето")
         check(
             engine.decision(for: "неограненный", correctTypos: true) == nil,

@@ -38,7 +38,7 @@ enum LayoutConverter {
 
         for scalar in text.unicodeScalars {
             switch scalar.value {
-            case 0x0041...0x007A: latinCount += 1
+            case 0x0041...0x005A, 0x0061...0x007A: latinCount += 1
             case 0x0400...0x04FF: cyrillicCount += 1
             default: break
             }
@@ -46,6 +46,13 @@ enum LayoutConverter {
 
         guard max(latinCount, cyrillicCount) > 0 else { return nil }
         return latinCount >= cyrillicCount ? .english : .russian
+    }
+
+    static func isLexicalWord(_ text: String, language: SupportedLanguage) -> Bool {
+        guard self.language(of: text) == language else { return false }
+        return text.allSatisfy { character in
+            character.isLetter || character == "-" || character == "'"
+        }
     }
 
     static func needsWordBoundary(between left: String, and right: String) -> Bool {
